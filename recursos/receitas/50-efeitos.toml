@@ -1,0 +1,103 @@
+[modulo]
+id = "50"
+nome = "efeitos"
+titulo = "Desfoque, sombras e cantos (picom)"
+requer = ["10"]
+# o raio e o que fica de fora do arredondamento dependem dos paineis
+afetada_por = ["efeitos", "paineis"]
+
+# Com o picom ligado, o compositor do xfwm4 fica desligado (os dois juntos
+# brigam pela tela). Sem aceleracao de video (VM sem 3D, llvmpipe) o picom.conf
+# sai em modo leve: backend xrender, sem desfoque nem vsync. O picom com glx
+# numa VM sem 3D costuma deixar as janelas sem redesenhar.
+
+# ---- desligado: volta o compositor do Xfce ----------------------------------
+[[passo]]
+tipo = "script"
+se = "efeitos == desligado"
+dizer = "desligando o picom deste projeto"
+tolera_falha = true
+corpo = '''
+if [ -f "$HOME/.config/autostart/d3bian-oasis-picom.desktop" ]; then
+  pkill -u "$(id -u)" -x picom 2>/dev/null || true
+  echo "picom parado"
+fi
+'''
+
+[[passo]]
+tipo = "autostart"
+se = "efeitos == desligado"
+id = "d3bian-oasis-picom"
+remover = true
+
+[[passo]]
+tipo = "xfconf"
+se = "efeitos == desligado"
+dizer = "@@picom_aviso@@"
+canal = "xfwm4"
+chave = "/general/use_compositing"
+tipo_valor = "bool"
+valor = "true"
+
+# ---- ligado ------------------------------------------------------------------
+[[passo]]
+tipo = "arquivo"
+se = "efeitos != desligado"
+dizer = "@@picom_aviso@@"
+destino = "~/.config/picom/picom.conf"
+modelo = "picom.conf"
+
+[[passo]]
+tipo = "autostart"
+se = "efeitos != desligado"
+id = "d3bian-oasis-picom"
+nome = "picom (d3bian-init-oasis-xfce)"
+comando = "picom --config @@HOME@@/.config/picom/picom.conf"
+
+[[passo]]
+tipo = "xfconf"
+se = "efeitos != desligado"
+dizer = "desligando o compositor do xfwm4 enquanto o picom roda"
+canal = "xfwm4"
+chave = "/general/use_compositing"
+tipo_valor = "bool"
+valor = "false"
+
+# inicia agora, na sessao aberta. Se o picom nao ficar de pe, o compositor do
+# xfwm4 volta, para a tela nao ficar sem transparencia nenhuma
+[[passo]]
+tipo = "script"
+se = "efeitos != desligado"
+dizer = "iniciando o picom nesta sessao"
+tolera_falha = true
+corpo = '''
+if [ -z "${DISPLAY:-}" ]; then
+  echo "sem sessao grafica aqui; o picom inicia na proxima entrada"
+  exit 0
+fi
+command -v picom >/dev/null || { echo "atencao: o picom nao esta instalado"; exit 0; }
+d3_processo picom
+pkill -u "$(id -u)" -x picom 2>/dev/null || true
+sleep 1
+setsid --fork picom --config "$HOME/.config/picom/picom.conf" >/dev/null 2>&1 </dev/null
+sleep 2
+if pgrep -u "$(id -u)" -x picom >/dev/null; then
+  echo "picom rodando"
+else
+  xfconf-query -c xfwm4 -p /general/use_compositing -s true 2>/dev/null || true
+  echo "atencao: o picom nao ficou de pe; o compositor do xfwm4 voltou. Teste com: picom --config ~/.config/picom/picom.conf"
+fi
+'''
+
+# roda antes do diario: para o picom; o diario tira o autostart e devolve o
+# compositor do xfwm4 como estava
+[[desfazer]]
+tipo = "script"
+dizer = "parando o picom"
+tolera_falha = true
+corpo = '''
+if [ -f "$HOME/.config/autostart/d3bian-oasis-picom.desktop" ]; then
+  pkill -u "$(id -u)" -x picom 2>/dev/null || true
+  echo "picom parado"
+fi
+'''

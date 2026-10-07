@@ -1,0 +1,224 @@
+[modulo]
+id = "20"
+nome = "aparencia"
+titulo = "Tema, icones, cursor, fontes e cor de destaque"
+requer = ["10"]
+afetada_por = ["modo", "destaque", "fonte", "cursor"]
+
+[[passo]]
+tipo = "xfconf"
+dizer = "aplicando o tema @@gtk_tema@@"
+canal = "xsettings"
+chave = "/Net/ThemeName"
+valor = "@@gtk_tema@@"
+
+[[passo]]
+tipo = "xfconf"
+canal = "xsettings"
+chave = "/Net/IconThemeName"
+valor = "@@icones_tema@@"
+
+[[passo]]
+tipo = "xfconf"
+dizer = "cursor @@cursor_tema@@"
+canal = "xsettings"
+chave = "/Gtk/CursorThemeName"
+valor = "@@cursor_tema@@"
+
+[[passo]]
+tipo = "xfconf"
+canal = "xsettings"
+chave = "/Gtk/CursorThemeSize"
+tipo_valor = "int"
+valor = "@@cursor_tamanho@@"
+
+[[passo]]
+tipo = "xfconf"
+se = "fonte != sistema"
+canal = "xsettings"
+chave = "/Gtk/FontName"
+valor = "@@fonte_ui@@ 10"
+
+[[passo]]
+tipo = "xfconf"
+canal = "xsettings"
+chave = "/Gtk/MonospaceFontName"
+valor = "@@fonte_mono@@ 10"
+
+[[passo]]
+tipo = "xfconf"
+canal = "xsettings"
+chave = "/Xft/HintStyle"
+valor = "hintslight"
+
+[[passo]]
+tipo = "xfconf"
+canal = "xsettings"
+chave = "/Xft/RGBA"
+valor = "rgb"
+
+# janela macia: titulo no centro e so os tres botoes da direita
+[[passo]]
+tipo = "xfconf"
+dizer = "ajustando as janelas"
+canal = "xfwm4"
+chave = "/general/theme"
+valor = "@@gtk_tema@@"
+
+# com o encaixe ligado o 35 troca o tema acima pela copia de bordas largas;
+# se so esta receita rodar de novo, a copia e refeita aqui
+[[passo]]
+tipo = "script"
+se = "janelas == sim"
+tolera_falha = true
+corpo = '''
+b="$HOME/.local/bin/d3bian-bordas"
+[ -x "$b" ] || exit 0
+d3_antes "$HOME/.themes/$CTX_GTK_TEMA-bordas"
+novo=$("$b" "$CTX_GTK_TEMA" 4)
+d3_xfconf xfwm4 /general/theme string
+xfconf-query -c xfwm4 -p /general/theme -s "$novo"
+'''
+
+[[passo]]
+tipo = "xfconf"
+canal = "xfwm4"
+chave = "/general/button_layout"
+valor = "|HMC"
+
+[[passo]]
+tipo = "xfconf"
+canal = "xfwm4"
+chave = "/general/title_alignment"
+valor = "center"
+
+[[passo]]
+tipo = "xfconf"
+se = "fonte != sistema"
+canal = "xfwm4"
+chave = "/general/title_font"
+valor = "@@fonte_titulo@@"
+
+# o motor nao anota passo comando; o valor de antes destas chaves e guardado
+# aqui, para o desfazer devolver
+[[passo]]
+tipo = "script"
+tolera_falha = true
+corpo = '''
+for chave in color-scheme gtk-theme icon-theme cursor-theme cursor-size monospace-font-name accent-color; do
+  d3_gsettings org.gnome.desktop.interface "$chave"
+done
+'''
+
+# apps GTK4 e libadwaita nao leem o xsettings
+[[passo]]
+tipo = "comando"
+dizer = "avisando os apps GTK4 que o modo e @@modo@@"
+tolera_falha = true
+argumentos = ["gsettings", "set", "org.gnome.desktop.interface", "color-scheme", "@@gtk_esquema@@"]
+
+[[passo]]
+tipo = "comando"
+tolera_falha = true
+argumentos = ["gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", "@@gtk_tema@@"]
+
+[[passo]]
+tipo = "comando"
+tolera_falha = true
+argumentos = ["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", "@@icones_tema@@"]
+
+[[passo]]
+tipo = "comando"
+tolera_falha = true
+argumentos = ["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", "@@cursor_tema@@"]
+
+[[passo]]
+tipo = "comando"
+tolera_falha = true
+argumentos = ["gsettings", "set", "org.gnome.desktop.interface", "monospace-font-name", "@@fonte_mono@@ 10"]
+
+# a cor de destaque dos apps libadwaita (GNOME 47 em diante) tem uma lista
+# fechada de cores; vai a mais proxima. Sem a chave (esquema antigo), passa
+[[passo]]
+tipo = "comando"
+tolera_falha = true
+argumentos = ["gsettings", "set", "org.gnome.desktop.interface", "accent-color", "@@destaque_adwaita@@"]
+
+[[passo]]
+tipo = "arquivo"
+dizer = "arquivos de tema para quem nao le o xsettings"
+destino = "~/.config/gtk-3.0/settings.ini"
+conteudo = '''
+[Settings]
+gtk-theme-name=@@gtk_tema@@
+gtk-icon-theme-name=@@icones_tema@@
+gtk-cursor-theme-name=@@cursor_tema@@
+gtk-cursor-theme-size=@@cursor_tamanho@@
+gtk-font-name=@@fonte_ui@@ 10
+gtk-application-prefer-dark-theme=@@gtk_escuro@@
+gtk-xft-antialias=1
+gtk-xft-hinting=1
+gtk-xft-hintstyle=hintslight
+gtk-xft-rgba=rgb
+'''
+
+[[passo]]
+tipo = "arquivo"
+destino = "~/.gtkrc-2.0"
+conteudo = '''
+gtk-theme-name="@@gtk_tema@@"
+gtk-icon-theme-name="@@icones_tema@@"
+gtk-cursor-theme-name="@@cursor_tema@@"
+gtk-font-name="@@fonte_ui@@ 10"
+'''
+
+# o cursor da area de trabalho e dos programas que nao sao GTK
+[[passo]]
+tipo = "arquivo"
+destino = "~/.icons/default/index.theme"
+conteudo = '''
+[Icon Theme]
+Name=Default
+Comment=Cursor escolhido pelo @@NOME@@
+Inherits=@@cursor_tema@@
+'''
+
+# O Orchis do Debian so vem em azul. Por cima dele, a cor escolhida pinta a
+# selecao, o botao principal, as chaves e as barras de progresso do GTK 3
+[[passo]]
+tipo = "bloco"
+se = "destaque != orchis"
+dizer = "cor de destaque: @@destaque@@"
+destino = "~/.config/gtk-3.0/gtk.css"
+marca = "@@NOME@@ destaque"
+conteudo = '''
+@define-color theme_selected_bg_color @@destaque_cor@@;
+@define-color selected_bg_color @@destaque_cor@@;
+@define-color accent_bg_color @@destaque_cor@@;
+@define-color accent_color @@destaque_cor@@;
+selection, .view:selected, treeview.view:selected, iconview:selected, row:selected,
+flowboxchild:selected, entry selection, textview text selection, label selection {
+  background-color: @@destaque_cor@@;
+  color: @@destaque_texto@@;
+}
+button.suggested-action {
+  background-color: @@destaque_cor@@;
+  color: @@destaque_texto@@;
+}
+switch:checked {
+  background-color: @@destaque_cor@@;
+}
+progressbar progress, scale highlight, levelbar block.filled {
+  background-color: @@destaque_cor@@;
+  border-color: @@destaque_cor@@;
+}
+'''
+
+[[passo]]
+tipo = "bloco"
+se = "destaque == orchis"
+destino = "~/.config/gtk-3.0/gtk.css"
+marca = "@@NOME@@ destaque"
+conteudo = '''
+/* o azul do proprio Orchis: nada a trocar */
+'''

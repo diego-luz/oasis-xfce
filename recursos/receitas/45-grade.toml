@@ -1,0 +1,47 @@
+[modulo]
+id = "45"
+nome = "grade"
+titulo = "Grade de aplicativos e busca (rofi)"
+requer = ["10"]
+afetada_por = ["modo", "destaque", "fonte"]
+
+# Os temas do rofi sao nossos (recursos/arquivos/rofi-*.rasi), com as cores do
+# modo e do destaque. O d3bian-grade abre e fecha a grade ou a busca, e e o que
+# os botoes das ilhas e os atalhos chamam.
+
+[[passo]]
+tipo = "arquivo"
+dizer = "tema da grade de aplicativos"
+destino = "~/.config/rofi/oasis-grade.rasi"
+modelo = "rofi-grade.rasi"
+
+[[passo]]
+tipo = "arquivo"
+dizer = "tema da busca"
+destino = "~/.config/rofi/oasis-busca.rasi"
+modelo = "rofi-busca.rasi"
+
+[[passo]]
+tipo = "copiar"
+origem = "@@arquivos@@/grade.sh"
+destino = "~/.local/bin/d3bian-grade"
+
+[[passo]]
+tipo = "comando"
+tolera_falha = true
+argumentos = ["chmod", "755", "@@HOME@@/.local/bin/d3bian-grade"]
+
+[[passo]]
+tipo = "script"
+dizer = "atalhos: Super+A abre a grade, Super+Espaco a busca"
+corpo = '''
+atalho() {
+  d3_xfconf xfce4-keyboard-shortcuts "$1" string
+  xfconf-query -c xfce4-keyboard-shortcuts -p "$1" -n -t string -s "$2" 2>/dev/null \
+    || xfconf-query -c xfce4-keyboard-shortcuts -p "$1" -s "$2"
+}
+g="$HOME/.local/bin/d3bian-grade"
+atalho '/commands/custom/<Super>a'     "$g grade"
+atalho '/commands/custom/<Super>space' "$g busca"
+echo "grade em Super+A e no botao da ilha da esquerda; busca em Super+Espaco e no da direita"
+'''

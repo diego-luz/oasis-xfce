@@ -1,0 +1,20 @@
+[modulo]
+id = "00"
+nome = "backup"
+titulo = "Copia de seguranca do que existe hoje"
+afetada_por = []
+
+# O motor ja guarda cada arquivo antes de escrever nele, e anota no diario o
+# que muda. Esta etapa guarda de uma vez o que as proximas vao tocar.
+[[passo]]
+tipo = "backup"
+dizer = "guardando a configuracao atual"
+caminhos = [
+  "~/.config/xfce4",
+  "~/.config/gtk-3.0",
+  "~/.gtkrc-2.0",
+  "~/.config/picom",
+  "~/.config/rofi",
+  "~/.config/autostart",
+  "~/.xprofile",
+]

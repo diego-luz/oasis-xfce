@@ -1,0 +1,187 @@
+[modulo]
+id = "30"
+nome = "paineis"
+titulo = "Paineis em ilhas (ou barra unica)"
+requer = ["10"]
+afetada_por = ["paineis", "barra_lado", "clima", "menu_global", "logo", "modo", "destaque", "fonte"]
+
+# Os paineis sao escritos de uma vez no xfce4-panel.xml (pelo paineis.py) e o
+# painel e reiniciado: o xfconf guarda o painel inteiro em memoria, entao mudar
+# propriedade por propriedade com o painel vivo daria uma barra pela metade.
+#
+# Ilha solta da borda nao reserva espaco na tela; as margens do xfwm4 guardam
+# esse espaco para as janelas maximizadas. Mudou a resolucao? Rode de novo so
+# esta etapa: aplicar --apenas paineis.
+
+# os paineis inteiros como eram antes do projeto, uma vez so: o [[desfazer]]
+# daqui devolve com load. Fica aqui, e nao na 00, porque o xfce4-panel-profiles
+# vem na receita 10 e nao costuma estar instalado antes
+[[passo]]
+tipo = "script"
+dizer = "guardando os paineis do jeito que estao"
+tolera_falha = true
+corpo = '''
+antes="$CTX_ESTADO_DIR/painel-antes.tar.bz2"
+if [ ! -f "$antes" ] && command -v xfce4-panel-profiles >/dev/null; then
+  mkdir -p "$CTX_ESTADO_DIR"
+  xfce4-panel-profiles save "$antes" >/dev/null 2>&1 && echo "paineis de antes guardados" \
+    || echo "atencao: nao consegui guardar os paineis de antes"
+fi
+'''
+
+# icones dos botoes e do menu; arquivo por arquivo, para nao mexer no resto
+# da pasta de icones
+[[passo]]
+tipo = "copiar"
+dizer = "icones do menu, da grade e da busca"
+origem = "@@arquivos@@/icones/d3bian-oasis-logo.svg"
+destino = "@@icones_dir@@/d3bian-oasis-logo.svg"
+
+[[passo]]
+tipo = "copiar"
+origem = "@@arquivos@@/icones/d3bian-oasis-grade.svg"
+destino = "@@icones_dir@@/d3bian-oasis-grade.svg"
+
+[[passo]]
+tipo = "copiar"
+origem = "@@arquivos@@/icones/d3bian-oasis-busca.svg"
+destino = "@@icones_dir@@/d3bian-oasis-busca.svg"
+
+[[passo]]
+tipo = "script"
+dizer = "montando os paineis: @@paineis@@"
+corpo = '''
+xml="$HOME/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
+mkdir -p "$(dirname "$xml")"
+d3_antes "$xml"
+
+args=(--xml "$xml" --paineis "$CTX_PAINEIS" --lado "$CTX_BARRA_LADO" --modo "$CTX_MODO"
+      --clima "$CTX_CLIMA" --menu-global "$CTX_MENU_GLOBAL" --notebook "$CTX_NOTEBOOK"
+      --logo "$CTX_LOGO_MENU" --favoritos "$CTX_FAVORITOS" --destaque "$CTX_DESTAQUE_COR"
+      --fundo-ilha "$CTX_PAINEL_FUNDO_ILHA" --fundo-barra "$CTX_PAINEL_FUNDO_BARRA"
+      --fonte "$CTX_FONTE_UI"
+      --grade "$HOME/.local/bin/d3bian-grade grade" --busca "$HOME/.local/bin/d3bian-grade busca"
+      --icone-grade "$CTX_ICONES_DIR/d3bian-oasis-grade.svg"
+      --icone-busca "$CTX_ICONES_DIR/d3bian-oasis-busca.svg")
+
+# os botoes (launcher-N) e os favoritos do dock (docklike-N.rc) sao anotados
+# antes de escritos, para o desfazer saber o que e novo
+while IFS= read -r f; do
+  if [ -n "$f" ]; then d3_antes "$f"; fi
+done < <(python3 "$CTX_ARQUIVOS/paineis.py" "${args[@]}" --listar)
+
+saida=$(python3 "$CTX_ARQUIVOS/paineis.py" "${args[@]}")
+printf '%s\n' "$saida" | grep -v '^margens' || true
+
+# o plugin de energia esconde o icone proprio do xfce4-power-manager ao entrar
+# na barra; anotado para o desfazer devolver como era
+case "$saida" in
+  *power-manager-plugin*) d3_xfconf xfce4-power-manager /xfce4-power-manager/show-tray-icon bool ;;
+esac
+
+# margens do xfwm4: o espaco das ilhas, que as janelas maximizadas respeitam
+margem() {
+  d3_xfconf xfwm4 "/general/margin_$1" int
+  xfconf-query -c xfwm4 -p "/general/margin_$1" -n -t int -s "$2" 2>/dev/null \
+    || xfconf-query -c xfwm4 -p "/general/margin_$1" -s "$2" 2>/dev/null || true
+}
+read -r cima baixo <<< "$(printf '%s\n' "$saida" | sed -n 's/^margens //p')"
+read -r ilha_cima ilha_baixo <<< "$(printf '%s\n' "$saida" | sed -n 's/^margens_ilhas //p')"
+if [ "$CTX_PAINEIS" = ilhas ]; then
+  margem top "${cima:-0}"
+  margem bottom "${baixo:-0}"
+else
+  # barra unica: so volta a zero a margem que as ilhas puseram
+  atual=$(xfconf-query -c xfwm4 -p /general/margin_top 2>/dev/null || echo 0)
+  if [ "$atual" = "${ilha_cima:-x}" ]; then margem top 0; fi
+  atual=$(xfconf-query -c xfwm4 -p /general/margin_bottom 2>/dev/null || echo 0)
+  if [ "$atual" = "${ilha_baixo:-x}" ]; then margem bottom 0; fi
+fi
+
+# --quit com o painel parado abre a janela "Falha ao sair do painel", entao so
+# pede para sair quando ele esta rodando, e espera fechar de fato
+if command -v xfce4-panel >/dev/null && pgrep -x xfce4-panel >/dev/null; then
+  xfce4-panel --quit >/dev/null 2>&1 || true
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    pgrep -x xfce4-panel >/dev/null || break
+    sleep 0.5
+  done
+  pkill -x xfce4-panel 2>/dev/null || true
+fi
+# o xfconfd guarda o painel em memoria e sobrescreveria o arquivo ao sair
+pkill -x xfconfd 2>/dev/null || true
+sleep 1
+if command -v xfce4-panel >/dev/null; then
+  setsid --fork xfce4-panel >/dev/null 2>&1 </dev/null
+  sleep 2
+fi
+echo "paineis montados"
+'''
+
+# ilhas: cantos redondos, texto legivel e botoes macios; o fundo translucido
+# vem do proprio painel (background-rgba). Com o picom, o desfoque e os cantos
+# dele usam o mesmo raio
+[[passo]]
+tipo = "bloco"
+se = "paineis == ilhas"
+dizer = "cantos e cores das ilhas"
+destino = "~/.config/gtk-3.0/gtk.css"
+marca = "@@NOME@@ paineis"
+conteudo = '''
+.xfce4-panel.background {
+  border-radius: @@raio@@px;
+}
+.xfce4-panel.background,
+.xfce4-panel.background label,
+.xfce4-panel.background button label,
+.xfce4-panel.background image {
+  color: @@painel_texto@@;
+}
+.xfce4-panel.background button {
+  border-radius: 10px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+.xfce4-panel.background button:hover {
+  background-color: @@painel_hover@@;
+}
+.xfce4-panel.background button:checked {
+  background-color: @@destaque_suave@@;
+}
+'''
+
+[[passo]]
+tipo = "bloco"
+se = "paineis == barra_unica"
+dizer = "espacamento e cor do texto da barra"
+destino = "~/.config/gtk-3.0/gtk.css"
+marca = "@@NOME@@ paineis"
+conteudo = '''
+.xfce4-panel.background,
+.xfce4-panel.background label,
+.xfce4-panel.background button label,
+.xfce4-panel.background image {
+  color: @@painel_texto@@;
+}
+.xfce4-panel button,
+.xfce4-panel widget {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+'''
+
+# os paineis de antes foram guardados no primeiro passo; o load tambem
+# reinicia o painel. As margens do xfwm4 voltam pelo diario
+[[desfazer]]
+tipo = "script"
+dizer = "devolvendo os paineis de antes"
+tolera_falha = true
+corpo = '''
+antes="$CTX_ESTADO_DIR/painel-antes.tar.bz2"
+if [ -f "$antes" ] && command -v xfce4-panel-profiles >/dev/null; then
+  xfce4-panel-profiles load "$antes" >/dev/null 2>&1 && echo "paineis de antes carregados" \
+    || echo "atencao: o xfce4-panel-profiles nao carregou os paineis de antes"
+else
+  echo "atencao: sem copia dos paineis de antes; eles ficam como estao"
+fi
+'''

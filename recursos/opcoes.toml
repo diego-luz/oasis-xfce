@@ -1,0 +1,128 @@
+# Preferencias que a pagina de Ajustes desenha e que as receitas usam.
+#
+# Tudo vem do repositorio do Debian: tema Orchis, icones Papirus, cursor
+# Breeze, picom e rofi. Os paineis em ilhas, os temas da grade e o papel de
+# parede sao escritos aqui. Nada e clonado nem compilado.
+
+[[opcao]]
+chave = "modo"
+padrao = "escuro"
+valores = ["escuro", "claro"]
+titulo = "Claro ou escuro"
+ajuda = "Vale para as janelas, os icones, as ilhas e a grade de aplicativos"
+grupo = "Visual"
+nomes = { escuro = "Escuro", claro = "Claro" }
+
+[[opcao]]
+chave = "destaque"
+padrao = "areia"
+valores = ["areia", "terracota", "oasis", "orchis"]
+titulo = "Cor de destaque"
+ajuda = "O Orchis do Debian so vem em azul; a cor pinta as ilhas, a grade, a selecao e os botoes"
+grupo = "Visual"
+nomes = { areia = "Areia", terracota = "Terracota", oasis = "Oasis (verde-agua)", orchis = "Azul do Orchis" }
+
+[[opcao]]
+chave = "fonte"
+padrao = "inter"
+valores = ["inter", "sistema"]
+titulo = "Fonte da interface"
+ajuda = "Inter vem do repositorio, com JetBrains Mono para o texto monoespacado"
+grupo = "Visual"
+nomes = { inter = "Inter", sistema = "Manter a atual" }
+
+[[opcao]]
+chave = "cursor"
+padrao = "breeze"
+valores = ["breeze", "breeze_claro"]
+titulo = "Cursor do mouse"
+ajuda = "O Breeze do KDE, escuro ou claro"
+grupo = "Visual"
+nomes = { breeze = "Breeze escuro", breeze_claro = "Breeze claro" }
+
+[[opcao]]
+chave = "paineis"
+padrao = "ilhas"
+valores = ["ilhas", "barra_unica"]
+titulo = "Paineis"
+ajuda = "Ilhas: barra fina em cima e tres ilhas soltas embaixo. Barra unica: uma so, colada na borda"
+grupo = "Paineis"
+nomes = { ilhas = "Em ilhas", barra_unica = "Barra unica" }
+
+[[opcao]]
+chave = "barra_lado"
+padrao = "baixo"
+valores = ["baixo", "topo"]
+titulo = "Onde fica a barra unica"
+ajuda = "So vale com a barra unica"
+grupo = "Paineis"
+nomes = { baixo = "Embaixo", topo = "No topo" }
+
+[[opcao]]
+chave = "clima"
+padrao = "sim"
+valores = ["sim", "nao"]
+titulo = "Previsao do tempo"
+ajuda = "O plugin de clima do Xfce na ilha da esquerda; a cidade se escolhe no clique direito"
+grupo = "Paineis"
+
+[[opcao]]
+chave = "menu_global"
+padrao = "nao"
+valores = ["nao", "sim"]
+titulo = "Menu do programa na barra de cima"
+ajuda = "Arquivo, Editar... do programa ativo na barra; os menus aparecem depois de entrar de novo na sessao"
+grupo = "Paineis"
+
+[[opcao]]
+chave = "logo"
+padrao = "oasis"
+valores = ["oasis", "debian"]
+titulo = "Icone do menu"
+ajuda = "O botao do menu no canto de cima"
+grupo = "Paineis"
+nomes = { oasis = "Sol e duna", debian = "Logo do Debian" }
+
+[[opcao]]
+chave = "efeitos"
+padrao = "desfoque"
+valores = ["desfoque", "sombras", "desligado"]
+titulo = "Efeitos (picom)"
+ajuda = "Sem aceleracao de video (VM sem 3D) o picom roda leve, sem desfoque, mesmo escolhendo desfoque"
+grupo = "Efeitos"
+nomes = { desfoque = "Desfoque e sombras", sombras = "So sombras", desligado = "Desligados" }
+
+[[opcao]]
+chave = "janelas"
+padrao = "sim"
+valores = ["sim", "nao"]
+titulo = "Encaixe e bordas de janela"
+ajuda = "Super e setas para metades, Super+1 a 4 para quartos, layouts no Super+Z e bordas mais largas"
+grupo = "Janelas"
+
+[[opcao]]
+chave = "papel"
+padrao = "dunas"
+valores = ["dunas", "degrade", "manter"]
+titulo = "Papel de parede"
+ajuda = "Desenhado aqui mesmo, no tamanho da sua tela, sem baixar nada"
+grupo = "Area de trabalho"
+nomes = { dunas = "Dunas", degrade = "Degrade suave", manter = "Manter o atual" }
+
+[[opcao]]
+chave = "cor_papel"
+padrao = "deserto"
+valores = ["deserto", "oasis", "crepusculo", "noite"]
+titulo = "Cores do papel de parede"
+ajuda = "Deserto ao sol, oasis verde-agua, crepusculo lilas ou noite azul"
+grupo = "Area de trabalho"
+nomes = { deserto = "Deserto", oasis = "Oasis", crepusculo = "Crepusculo", noite = "Noite" }
+
+[[opcao]]
+chave = "icones_area"
+padrao = "nenhum"
+valores = ["nenhum", "so_removiveis", "tudo"]
+titulo = "Icones na area de trabalho"
+ajuda = "Sem icone nenhum o papel de parede aparece inteiro"
+grupo = "Area de trabalho"
+nomes = { nenhum = "Nenhum", so_removiveis = "So pendrives e discos", tudo = "Tudo, como vem" }

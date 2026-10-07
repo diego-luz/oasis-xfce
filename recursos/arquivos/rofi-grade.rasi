@@ -1,0 +1,115 @@
+/*
+ * Grade de aplicativos do @@NOME@@ (licenca MIT).
+ * Escrito pela receita 45 com as cores do modo e do destaque escolhidos;
+ * mudar aqui some no proximo Aplicar. Abre com Super+A ou pelo botao da ilha
+ * da esquerda: d3bian-grade grade
+ */
+
+* {
+    fundo:            @@rofi_fundo@@;
+    fundo2:           @@rofi_fundo2@@;
+    texto:            @@rofi_texto@@;
+    fraco:            @@rofi_fraco@@;
+    borda:            @@rofi_borda@@;
+    destaque:         @@rofi_destaque@@;
+    destaque-suave:   @@rofi_destaque_suave@@;
+
+    background-color: transparent;
+    text-color:       @texto;
+    font:             "@@fonte_ui@@ 11";
+}
+
+window {
+    transparency:     "real";
+    location:         center;
+    anchor:           center;
+    width:            78%;
+    height:           76%;
+    padding:          36px 56px;
+    border:           1px solid;
+    border-color:     @borda;
+    border-radius:    @@raio@@px;
+    background-color: @fundo;
+}
+
+mainbox {
+    children:         [ inputbar, listview ];
+    spacing:          28px;
+}
+
+inputbar {
+    children:         [ prompt, entry ];
+    expand:           false;
+    margin:           0px 32%;
+    padding:          10px 18px;
+    spacing:          10px;
+    border-radius:    @@raio@@px;
+    background-color: @fundo2;
+}
+
+prompt {
+    text-color:       @destaque;
+}
+
+entry {
+    placeholder:       "Buscar aplicativo";
+    placeholder-color: @fraco;
+    cursor:            text;
+}
+
+listview {
+    columns:          7;
+    lines:            4;
+    flow:             horizontal;
+    fixed-columns:    true;
+    fixed-height:     true;
+    dynamic:          false;
+    cycle:            false;
+    scrollbar:        false;
+    spacing:          16px;
+}
+
+element {
+    orientation:      vertical;
+    padding:          16px 8px;
+    spacing:          10px;
+    border-radius:    @@raio@@px;
+    cursor:           pointer;
+}
+
+element normal.normal,
+element alternate.normal,
+element normal.active,
+element alternate.active {
+    background-color: transparent;
+    text-color:       @texto;
+}
+
+element selected.normal,
+element selected.active {
+    background-color: @destaque-suave;
+    text-color:       @texto;
+}
+
+element-icon {
+    size:             64px;
+    horizontal-align: 0.5;
+    cursor:           inherit;
+}
+
+element-text {
+    horizontal-align: 0.5;
+    vertical-align:   0.5;
+    text-color:       inherit;
+    cursor:           inherit;
+}
+
+message {
+    padding:          8px 16px;
+    border-radius:    @@raio@@px;
+    background-color: @fundo2;
+}
+
+textbox {
+    text-color:       @fraco;
+}

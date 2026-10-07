@@ -1,0 +1,87 @@
+[modulo]
+id = "32"
+nome = "menu-global"
+titulo = "Menu do programa ativo na barra de cima"
+requer = ["10"]
+afetada_por = ["menu_global"]
+
+# Os pacotes vem na receita 10 e o plugin entra na barra pela 30. Aqui fica o
+# que faz os programas GTK mandarem o menu para a barra: o modulo
+# appmenu-gtk-module carregado no comeco da sessao (como no bigsur-xfce). Os
+# menus so aparecem depois de sair e entrar de novo na sessao.
+
+[[passo]]
+tipo = "script"
+se = "menu_global != sim"
+dizer = "desligando o menu global, se estava ligado"
+tolera_falha = true
+corpo = '''
+marca="$CTX_NOME menu global"
+mexeu=nao
+for f in "$HOME/.config/environment.d/50-appmenu.conf" "$HOME/.config/xfce4/appmenu.sh"; do
+  if [ -e "$f" ]; then d3_antes "$f"; rm -f "$f"; mexeu=sim; fi
+done
+if grep -qxF "# $marca" "$HOME/.xprofile" 2>/dev/null; then
+  d3_antes "$HOME/.xprofile"
+  # o mesmo tirar_bloco do desfazer: gravacao inteira ou nada, seguindo link
+  PYTHONPATH="$D3_DIARIO_PAI" "$D3_DIARIO_PYTHON" - "$HOME/.xprofile" "$marca" <<'PY'
+import importlib, os, sys
+from pathlib import Path
+d = importlib.import_module(os.environ["D3_DIARIO_PACOTE"] + ".desfazer")
+d.tirar_bloco(Path(sys.argv[1]), sys.argv[2], "#")
+PY
+  mexeu=sim
+fi
+if [ "$mexeu" = sim ]; then
+  for k in ShellShowsMenubar ShellShowsAppmenu; do
+    d3_xfconf xsettings "/Gtk/$k" bool
+    xfconf-query -c xsettings -p "/Gtk/$k" -s false 2>/dev/null || true
+  done
+  echo "menu global desligado; o efeito completo vem depois de entrar de novo na sessao"
+fi
+'''
+
+[[passo]]
+tipo = "xfconf"
+se = "menu_global == sim"
+dizer = "ligando o menu global"
+canal = "xsettings"
+chave = "/Gtk/ShellShowsMenubar"
+tipo_valor = "bool"
+valor = "true"
+
+[[passo]]
+tipo = "xfconf"
+se = "menu_global == sim"
+canal = "xsettings"
+chave = "/Gtk/ShellShowsAppmenu"
+tipo_valor = "bool"
+valor = "true"
+
+[[passo]]
+tipo = "copiar"
+se = "menu_global == sim"
+origem = "@@arquivos@@/appmenu.sh"
+destino = "~/.config/xfce4/appmenu.sh"
+
+# para os programas iniciados pelo systemd da sessao
+[[passo]]
+tipo = "arquivo"
+se = "menu_global == sim"
+destino = "~/.config/environment.d/50-appmenu.conf"
+conteudo = '''
+GTK_MODULES=appmenu-gtk-module
+UBUNTU_MENUPROXY=1
+'''
+
+# e para os da sessao grafica, que le o ~/.xprofile ao entrar
+[[passo]]
+tipo = "bloco"
+se = "menu_global == sim"
+dizer = "carregando o modulo GTK no inicio da sessao"
+destino = "~/.xprofile"
+comentario = "#"
+marca = "@@NOME@@ menu global"
+conteudo = '''
+. "$HOME/.config/xfce4/appmenu.sh"
+'''

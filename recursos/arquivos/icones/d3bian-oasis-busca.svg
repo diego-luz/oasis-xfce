@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- d3bian-init-oasis-xfce: busca (MIT) -->
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="#efe6da"/>
+  <rect x="13" y="13" width="14" height="14" rx="4" fill="#e0674b"/>
+  <rect x="31" y="13" width="14" height="14" rx="4" fill="#8a6fd1"/>
+  <rect x="13" y="31" width="14" height="14" rx="4" fill="#2bb3a3"/>
+  <circle cx="40" cy="40" r="8" fill="none" stroke="#3a2f28" stroke-width="4"/>
+  <path d="M46 46 L52 52" stroke="#3a2f28" stroke-width="5" stroke-linecap="round"/>
+</svg>

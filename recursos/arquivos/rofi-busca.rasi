@@ -1,0 +1,116 @@
+/*
+ * Busca do @@NOME@@ (licenca MIT): aplicativos, janelas abertas e comandos.
+ * Escrito pela receita 45; mudar aqui some no proximo Aplicar. Abre com
+ * Super+Espaco ou pelo botao da ilha da direita: d3bian-grade busca.
+ * Ctrl+Tab troca entre aplicativos, janelas e comandos.
+ */
+
+* {
+    fundo:            @@rofi_fundo@@;
+    fundo2:           @@rofi_fundo2@@;
+    texto:            @@rofi_texto@@;
+    fraco:            @@rofi_fraco@@;
+    borda:            @@rofi_borda@@;
+    destaque:         @@rofi_destaque@@;
+    destaque-suave:   @@rofi_destaque_suave@@;
+    destaque-texto:   @@rofi_destaque_texto@@;
+
+    background-color: transparent;
+    text-color:       @texto;
+    font:             "@@fonte_ui@@ 11";
+}
+
+window {
+    transparency:     "real";
+    location:         center;
+    anchor:           center;
+    y-offset:         -12%;
+    width:            620px;
+    padding:          14px;
+    border:           1px solid;
+    border-color:     @borda;
+    border-radius:    @@raio@@px;
+    background-color: @fundo;
+}
+
+mainbox {
+    children:         [ inputbar, mode-switcher, listview ];
+    spacing:          12px;
+}
+
+inputbar {
+    children:         [ prompt, entry ];
+    padding:          10px 14px;
+    spacing:          10px;
+    border-radius:    @@raio@@px;
+    background-color: @fundo2;
+}
+
+prompt {
+    text-color:       @destaque;
+}
+
+entry {
+    placeholder:       "Buscar";
+    placeholder-color: @fraco;
+    cursor:            text;
+}
+
+mode-switcher {
+    spacing:          8px;
+}
+
+button {
+    padding:          6px 10px;
+    border-radius:    @@raio@@px;
+    text-color:       @fraco;
+    cursor:           pointer;
+}
+
+button selected {
+    background-color: @destaque;
+    text-color:       @destaque-texto;
+}
+
+listview {
+    lines:            7;
+    columns:          1;
+    fixed-height:     false;
+    dynamic:          true;
+    cycle:            true;
+    scrollbar:        false;
+    spacing:          4px;
+}
+
+element {
+    orientation:      horizontal;
+    padding:          8px 12px;
+    spacing:          12px;
+    border-radius:    10px;
+    cursor:           pointer;
+}
+
+element normal.normal,
+element alternate.normal,
+element normal.active,
+element alternate.active {
+    background-color: transparent;
+    text-color:       @texto;
+}
+
+element selected.normal,
+element selected.active {
+    background-color: @destaque-suave;
+    text-color:       @texto;
+}
+
+element-icon {
+    size:             28px;
+    cursor:           inherit;
+}
+
+element-text {
+    vertical-align:   0.5;
+    text-color:       inherit;
+    cursor:           inherit;
+}

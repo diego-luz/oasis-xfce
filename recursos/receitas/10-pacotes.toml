@@ -1,0 +1,79 @@
+[modulo]
+id = "10"
+nome = "pacotes"
+titulo = "Tema, icones, fontes, plugins, picom e rofi do repositorio Debian"
+nucleo = true
+afetada_por = ["fonte", "clima", "menu_global", "efeitos"]
+
+# Tudo daqui sai do repositorio oficial do Debian 13. Nada e baixado de fora,
+# clonado ou compilado.
+
+[[passo]]
+tipo = "comando"
+dizer = "atualizando o indice do apt"
+root = true
+tolera_falha = true
+argumentos = ["apt-get", "update"]
+
+# guarda e devolve a barra inteira, com os arquivos dos plugins; a receita dos
+# paineis guarda a de antes com ele, e o desfazer carrega de volta
+[[passo]]
+tipo = "apt"
+dizer = "o que guarda e devolve os paineis"
+pacotes = ["xfce4-panel-profiles"]
+
+[[passo]]
+tipo = "apt"
+dizer = "tema Orchis, icones Papirus e cursor Breeze"
+pacotes = ["orchis-gtk-theme", "papirus-icon-theme", "breeze-cursor-theme"]
+
+[[passo]]
+tipo = "apt"
+dizer = "fonte monoespacada"
+pacotes = ["fonts-jetbrains-mono"]
+
+[[passo]]
+tipo = "apt"
+se = "fonte == inter"
+dizer = "fonte Inter"
+pacotes = ["fonts-inter"]
+
+# menu, dock, som, avisos e energia nos paineis
+[[passo]]
+tipo = "apt"
+dizer = "plugins dos paineis"
+pacotes = ["xfce4-whiskermenu-plugin", "xfce4-docklike-plugin", "xfce4-pulseaudio-plugin",
+           "xfce4-notifyd", "xfce4-power-manager-plugins"]
+
+[[passo]]
+tipo = "apt"
+se = "clima == sim"
+dizer = "plugin de previsao do tempo"
+pacotes = ["xfce4-weather-plugin"]
+
+# o plugin entra na barra pela receita 30, que confere se ele esta instalado;
+# por isso vem aqui, antes dela
+[[passo]]
+tipo = "apt"
+se = "menu_global == sim"
+dizer = "menu global"
+pacotes = ["xfce4-appmenu-plugin", "appmenu-gtk3-module", "appmenu-registrar",
+           "vala-panel-appmenu-common", "libdbusmenu-gtk3-4", "libdbusmenu-glib4"]
+
+[[passo]]
+tipo = "apt"
+dizer = "grade de aplicativos e busca"
+pacotes = ["rofi"]
+
+# o mesa-utils traz o glxinfo, que diz se o video tem aceleracao (sem ela o
+# picom fica em modo leve, sem desfoque)
+[[passo]]
+tipo = "apt"
+se = "efeitos != desligado"
+dizer = "picom para desfoque, sombras e cantos"
+pacotes = ["picom", "mesa-utils"]
+
+[[passo]]
+tipo = "apt"
+dizer = "o que desenha o papel de parede"
+pacotes = ["librsvg2-bin"]
