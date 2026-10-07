@@ -16,10 +16,12 @@ fi
 
 tema="$HOME/.config/rofi/oasis-$modo.rasi"
 [ -f "$tema" ] || tema=""
+# os icones do tema de agora do Xfce (o rofi nao le o xsettings)
+icones=$(xfconf-query -c xsettings -p /Net/IconThemeName 2>/dev/null || true)
 if [ "$modo" = grade ]; then
   exec rofi -show drun -modes drun -show-icons -drun-display-format '{name}' \
-    ${tema:+-theme "$tema"}
+    -display-drun 'Aplicativos' ${icones:+-icon-theme "$icones"} ${tema:+-theme "$tema"}
 fi
 exec rofi -show drun -modes 'drun,window,run' -show-icons -drun-display-format '{name}' \
   -display-drun 'Aplicativos' -display-window 'Janelas' -display-run 'Comandos' \
-  ${tema:+-theme "$tema"}
+  ${icones:+-icon-theme "$icones"} ${tema:+-theme "$tema"}

@@ -29,7 +29,7 @@ rofi, favoritos do dock e a detecção de vídeo sem aceleração ficam no
 
 | Arquivo | Para quê |
 |---|---|
-| `paineis.py` | escreve o `xfce4-panel.xml`, os botões (`launcher-N`) e os favoritos do docklike; `--listar` diz o que escreveria, para o diário anotar antes |
+| `paineis.py` | monta o perfil dos painéis (o `.tar.bz2` do `xfce4-panel-profiles`: `config.txt` em texto GVariant, os botões `launcher-N` e os favoritos do docklike); `--listar` diz o que o `load` escreveria, para o diário anotar antes |
 | `tela.py` | geometria do monitor principal e do maior, pelo `xrandr`, e a escala do Xfce |
 | `papel.py` | desenha o papel de parede em SVG (somas de senos com semente fixa); o `rsvg-convert` passa para PNG |
 | `picom.conf` | modelo do picom 12.5, com o backend, o desfoque e a transparência vindos do contexto |
@@ -38,6 +38,26 @@ rofi, favoritos do dock e a detecção de vídeo sem aceleração ficam no
 | `appmenu.sh` | carregado pelo `~/.xprofile` para o menu global |
 | `icones/*.svg` | ícones do menu, da grade e da busca, desenhados aqui |
 | `janelas.sh`, `layouts.py`, `bordas.py` | encaixe, layouts e bordas, iguais aos do minimal-xfce |
+
+## Como os painéis entram
+
+O `xfconfd` guarda o canal `xfce4-panel` em memória: escrever o
+`xfce4-panel.xml` e reiniciar o painel não adianta, ele volta com o layout de
+antes (e o `xfconfd`, ao sair, grava o de antes por cima do arquivo). Por isso o
+`paineis.py` monta um **perfil** no formato do `xfce4-panel-profiles` e a receita
+aplica com `xfce4-panel-profiles load`, que zera o canal e grava cada
+propriedade pelo `xfconfd`, copia os arquivos dos plugins para
+`~/.config/xfce4/panel` e pede ao painel que reinicie.
+
+Antes, uma vez só, `xfce4-panel-profiles save` guarda os painéis como estavam
+(`painel-antes.tar.bz2` na pasta de estado); o desfazer carrega esse perfil de
+volta. Sem essa cópia a etapa para, em vez de trocar painéis que não teriam
+volta.
+
+Duas armadilhas do pacote do Debian 13: ele não depende do `python3-gi`, sem o
+qual nem abre (a receita 10 instala os dois), e o `load` tira o botão cujo
+`Exec` não existe; por isso a receita 30 instala o `d3bian-grade` antes de
+carregar o perfil.
 
 ## Como as ilhas ficam soltas
 
@@ -55,16 +75,25 @@ mais dois vãos (68). Na barra única, só volta a zero a margem que as ilhas
 puseram.
 
 Os cantos redondos vêm de um bloco no `~/.config/gtk-3.0/gtk.css`
-(`.xfce4-panel.background { border-radius: 14px }`). O GTK não diferencia um
-painel do outro (todos são `.xfce4-panel.background`, sem nome próprio), por
-isso nas ilhas a barra de cima também flutua e é arredondada; na barra única o
-bloco não tem raio. O picom usa o mesmo raio (`corner-radius = 14`), para o
-desfoque não vazar pelos cantos; na barra única ele deixa os painéis
-(`window_type = 'dock'`) de fora do arredondamento.
+(`#XfcePanelWindow { border-radius: 14px }`). O seletor é o nome da janela do
+painel, e não `.xfce4-panel.background`: os plugins que rodam fora do painel
+(menu Whisker, som, avisos, clima, docklike) desenham numa janela própria com
+essas mesmas classes e ficariam redondos um a um, picotando a ilha. Esses
+plugins pintam um retângulo por cima do canto, então cada painel leva uma
+folga (um separador transparente fixo) nas pontas. Na barra de cima a barra
+também flutua e é arredondada; na barra única o bloco não tem raio. O picom usa
+o mesmo raio (`corner-radius = 14`), para o desfoque não vazar pelos cantos; na
+barra única ele deixa os painéis (`window_type = 'dock'`) de fora do
+arredondamento. Com os efeitos desligados, a sombra retangular que o xfwm4 põe
+nos painéis sai (`show_dock_shadow`), senão ela aparece nos cantos das ilhas.
+
+O teste de ponta a ponta (instalar, trocar opções, desligar os efeitos e
+voltar ao que era antes, com capturas da tela) roda num contêiner Debian 13
+com Xfce, Xvfb e um usuário de teste; as imagens do README saem dele.
 
 ## Testar sem mexer na área de trabalho
 
-As receitas chamam `xfconf-query`, `xfce4-panel`, `picom`, `pkill` e `gsettings`.
+As receitas chamam `xfconf-query`, `xfce4-panel`, `xfce4-panel-profiles`, `picom`, `pkill` e `gsettings`.
 Para testar, ponha programas falsos antes no `PATH` (que só anotam o que
 receberam), aponte `HOME` e as pastas XDG para uma pasta de rascunho e tire o
 `DISPLAY` e o `DBUS_SESSION_BUS_ADDRESS` do ambiente. O tema do rofi se confere

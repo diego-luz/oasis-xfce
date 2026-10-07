@@ -5,6 +5,15 @@
  * da esquerda: d3bian-grade grade
  */
 
+configuration {
+    show-icons:          true;
+    icon-theme:          "@@icones_tema@@";
+    drun-display-format: "{name}";
+    display-drun:        "Aplicativos";
+    display-window:      "Janelas";
+    display-run:         "Comandos";
+}
+
 * {
     fundo:            @@rofi_fundo@@;
     fundo2:           @@rofi_fundo2@@;
@@ -37,18 +46,16 @@ mainbox {
     spacing:          28px;
 }
 
+/* so o campo de busca, sem o nome do modo; a margem em % e da largura
+   da tela (no rofi), entao 23% deixa o campo com um quarto dela */
 inputbar {
-    children:         [ prompt, entry ];
+    children:         [ entry ];
     expand:           false;
-    margin:           0px 32%;
+    margin:           0px 23%;
     padding:          10px 18px;
     spacing:          10px;
     border-radius:    @@raio@@px;
     background-color: @fundo2;
-}
-
-prompt {
-    text-color:       @destaque;
 }
 
 entry {

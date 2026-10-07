@@ -99,50 +99,31 @@ canal = "xfwm4"
 chave = "/general/title_font"
 valor = "@@fonte_titulo@@"
 
-# o motor nao anota passo comando; o valor de antes destas chaves e guardado
-# aqui, para o desfazer devolver
+# apps GTK4 e libadwaita nao leem o xsettings. Sem o gsettings (a receita 10
+# instala, mas pode ter sido tirado) so eles ficam sem o tema: nao e motivo para
+# a etapa falhar. O valor de antes de cada chave e anotado para o desfazer
 [[passo]]
 tipo = "script"
-tolera_falha = true
-corpo = '''
-for chave in color-scheme gtk-theme icon-theme cursor-theme cursor-size monospace-font-name accent-color; do
-  d3_gsettings org.gnome.desktop.interface "$chave"
-done
-'''
-
-# apps GTK4 e libadwaita nao leem o xsettings
-[[passo]]
-tipo = "comando"
 dizer = "avisando os apps GTK4 que o modo e @@modo@@"
 tolera_falha = true
-argumentos = ["gsettings", "set", "org.gnome.desktop.interface", "color-scheme", "@@gtk_esquema@@"]
-
-[[passo]]
-tipo = "comando"
-tolera_falha = true
-argumentos = ["gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", "@@gtk_tema@@"]
-
-[[passo]]
-tipo = "comando"
-tolera_falha = true
-argumentos = ["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", "@@icones_tema@@"]
-
-[[passo]]
-tipo = "comando"
-tolera_falha = true
-argumentos = ["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", "@@cursor_tema@@"]
-
-[[passo]]
-tipo = "comando"
-tolera_falha = true
-argumentos = ["gsettings", "set", "org.gnome.desktop.interface", "monospace-font-name", "@@fonte_mono@@ 10"]
-
+corpo = '''
+command -v gsettings >/dev/null || { echo "sem o gsettings (libglib2.0-bin): os apps GTK4 ficam com o tema deles"; exit 0; }
+e=org.gnome.desktop.interface
+poe() {
+  d3_gsettings "$e" "$1"
+  gsettings set "$e" "$1" "$2" 2>/dev/null || true
+}
+poe color-scheme "$CTX_GTK_ESQUEMA"
+poe gtk-theme "$CTX_GTK_TEMA"
+poe icon-theme "$CTX_ICONES_TEMA"
+poe cursor-theme "$CTX_CURSOR_TEMA"
+poe monospace-font-name "$CTX_FONTE_MONO 10"
 # a cor de destaque dos apps libadwaita (GNOME 47 em diante) tem uma lista
 # fechada de cores; vai a mais proxima. Sem a chave (esquema antigo), passa
-[[passo]]
-tipo = "comando"
-tolera_falha = true
-argumentos = ["gsettings", "set", "org.gnome.desktop.interface", "accent-color", "@@destaque_adwaita@@"]
+if gsettings range "$e" accent-color >/dev/null 2>&1; then
+  poe accent-color "$CTX_DESTAQUE_ADWAITA"
+fi
+'''
 
 [[passo]]
 tipo = "arquivo"

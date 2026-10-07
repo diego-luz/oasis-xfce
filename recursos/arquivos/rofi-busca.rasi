@@ -5,6 +5,15 @@
  * Ctrl+Tab troca entre aplicativos, janelas e comandos.
  */
 
+configuration {
+    show-icons:          true;
+    icon-theme:          "@@icones_tema@@";
+    drun-display-format: "{name}";
+    display-drun:        "Aplicativos";
+    display-window:      "Janelas";
+    display-run:         "Comandos";
+}
+
 * {
     fundo:            @@rofi_fundo@@;
     fundo2:           @@rofi_fundo2@@;

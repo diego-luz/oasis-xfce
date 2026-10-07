@@ -15,17 +15,29 @@ root = true
 tolera_falha = true
 argumentos = ["apt-get", "update"]
 
-# guarda e devolve a barra inteira, com os arquivos dos plugins; a receita dos
-# paineis guarda a de antes com ele, e o desfazer carrega de volta
+# guarda e aplica a barra inteira, com os arquivos dos plugins: a receita dos
+# paineis guarda a de antes e carrega a nova com ele, e o desfazer carrega a de
+# antes de volta. O pacote do Debian 13 nao puxa o python3-gi, sem o qual ele
+# nem abre
 [[passo]]
 tipo = "apt"
-dizer = "o que guarda e devolve os paineis"
-pacotes = ["xfce4-panel-profiles"]
+dizer = "o que guarda e aplica os paineis"
+pacotes = ["xfce4-panel-profiles", "python3-gi"]
 
+# o gsettings, que avisa os apps GTK4 e libadwaita do tema e do modo; um Xfce
+# minimo vem sem ele
+[[passo]]
+tipo = "apt"
+dizer = "o gsettings, para os apps GTK4"
+pacotes = ["libglib2.0-bin"]
+
+# o librsvg2-common e o que deixa o GTK e o rofi lerem icones SVG (o Papirus e
+# os icones do menu e da grade sao SVG); um Xfce minimo vem sem ele e mostra
+# os botoes vazios
 [[passo]]
 tipo = "apt"
 dizer = "tema Orchis, icones Papirus e cursor Breeze"
-pacotes = ["orchis-gtk-theme", "papirus-icon-theme", "breeze-cursor-theme"]
+pacotes = ["orchis-gtk-theme", "papirus-icon-theme", "breeze-cursor-theme", "librsvg2-common"]
 
 [[passo]]
 tipo = "apt"

@@ -24,8 +24,9 @@ git clone https://git.saberdl.dev.br/d3bian-temas/oasis-xfce.git d3bian_init_oas
 python3 -m d3bian_init_oasis_xfce        # pede a senha uma vez e abre o painel
 ```
 
-> Ainda não há capturas de tela deste projeto: as imagens entram aqui quando
-> houver um teste completo num Debian 13 de verdade.
+<div align="center">
+  <img src="docs/imagens/resultado-instalado.jpg" alt="Depois de instalar, com as opções padrão: barra fina em cima e três ilhas embaixo" width="820">
+</div>
 
 ---
 
@@ -51,6 +52,28 @@ python3 -m d3bian_init_oasis_xfce        # pede a senha uma vez e abre o painel
   da sua tela
 - **Programas úteis**: uma lista pronta do repositório oficial do Debian, conforme o hardware
 - **Voltar ao que era antes** com o diário de alterações do [modelo](https://git.saberdl.dev.br/d3bian-temas/modelo)
+
+<!-- imagens: gerado a partir do teste num Debian 13; refazer, nao editar a mao -->
+## Telas
+
+As capturas vêm de um Debian 13 com Xfce 4.20 num contêiner de teste (tela
+virtual, sem aceleração de vídeo). Por isso o picom roda **leve** (`xrender`):
+há cantos redondos e sombras, mas **não há desfoque** atrás das ilhas e das
+janelas, como haveria numa máquina com placa de vídeo. O clima mostra `?`
+porque o contêiner não tem local configurado.
+
+| Janelas abertas | Claro, cor oásis e barra única |
+|---|---|
+| ![Terminal e gerenciador de arquivos sobre as dunas](docs/imagens/resultado-janelas.jpg) | ![Modo claro, cor oásis e barra única embaixo](docs/imagens/resultado-claro.jpg) |
+
+| Grade de aplicativos (Super+A) | Busca (Super+Espaço) |
+|---|---|
+| ![Grade de aplicativos no rofi](docs/imagens/grade.jpg) | ![Busca de aplicativos, janelas e comandos](docs/imagens/busca.jpg) |
+
+| Início | Ajustes |
+|---|---|
+| ![Início do painel](docs/imagens/painel-inicio.jpg) | ![Ajustes do painel](docs/imagens/painel-ajustes.jpg) |
+<!-- fim imagens -->
 
 ## Documentação
 

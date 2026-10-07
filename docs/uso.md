@@ -96,7 +96,7 @@ para o picom e devolve o compositor do xfwm4.
 |---|---|
 | `~/.config/d3bian-init-oasis-xfce` | opções |
 | `~/.local/state/d3bian-init-oasis-xfce` | estado, registro, diário, cópias de segurança e os painéis de antes |
-| `~/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml` | os painéis (ilhas ou barra única) |
+| `~/.local/state/d3bian-init-oasis-xfce/painel-oasis.tar.bz2` | o perfil dos painéis (ilhas ou barra única), carregado pelo `xfce4-panel-profiles` |
 | `~/.config/xfce4/panel/launcher-*`, `docklike-*.rc` | botões da grade e da busca, favoritos do dock |
 | `~/.local/share/icons/hicolor/scalable/apps/d3bian-oasis-*.svg` | ícones do menu, da grade e da busca |
 | `~/.config/picom/picom.conf`, `~/.config/autostart/d3bian-oasis-picom.desktop` | efeitos |
@@ -129,4 +129,4 @@ saem os pacotes que o projeto instalou.
 ## Para depois
 
 - Tela de login com o mesmo visual (LightDM): fica para uma próxima versão.
-- Capturas de tela da área de trabalho e uma galeria de exemplos na página.
+- Capturas numa máquina com aceleração de vídeo, com o desfoque do picom, e uma galeria de exemplos na página.
