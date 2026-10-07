@@ -71,8 +71,11 @@ oficial do Debian, mostrando só o que serve para o hardware encontrado.
 As ilhas são soltas da borda, e painel solto não reserva espaço na tela. Por
 isso o projeto põe margens no xfwm4 (Ajustes do gerenciador de janelas, ajustes
 finos, Espaços de trabalho, Margens): as janelas maximizadas param antes das
-ilhas. As posições são calculadas para o monitor principal: mudou a resolução,
-rode de novo só os painéis (e o papel de parede):
+ilhas, e o encaixe (Super+C, Super+X, Super+Shift e setas, Super+Z) também
+respeita as margens. As margens são em pixels de verdade: com a escala 2 do
+Xfce (telas HiDPI), elas saem dobradas. As posições são calculadas para o
+monitor principal e a escala de agora: mudou a resolução ou a escala, rode de
+novo só os painéis (e o papel de parede):
 
 ```sh
 python3 -m d3bian_init_oasis_xfce aplicar --apenas paineis,papel
@@ -82,13 +85,16 @@ python3 -m d3bian_init_oasis_xfce aplicar --apenas paineis,papel
 
 Com o picom ligado, o compositor do próprio xfwm4 fica desligado (os dois juntos
 brigam pela tela) e o picom inicia junto com a sessão
-(`~/.config/autostart/d3bian-oasis-picom.desktop`). Antes de escrever o
+(`~/.config/autostart/d3bian-oasis-picom.desktop`, que chama o
+`~/.local/bin/d3bian-picom`). Antes de escrever o
 `picom.conf`, o projeto confere o vídeo: com `glxinfo` dizendo `llvmpipe` (ou
 sem renderização direta), numa placa de vídeo de VM sem 3D, ou numa VM sem como
 confirmar, o picom roda **leve**: `xrender`, sem desfoque e sem vsync. O picom
 com `glx` numa VM sem 3D costuma deixar as janelas sem redesenhar. Se o picom
-não ficar de pé, o compositor do xfwm4 volta sozinho. **Efeitos desligados**
-para o picom e devolve o compositor do xfwm4.
+não ficar de pé (agora ou ao entrar na sessão), o `d3bian-picom` liga de volta
+o compositor do xfwm4. Com os efeitos **desligados**, o picom deste projeto
+para e o compositor do xfwm4 volta ao que era antes de o picom ligar. Um picom
+que você mesmo abriu, com outra configuração, nunca é fechado pelo projeto.
 
 ## O que fica onde
 
@@ -99,14 +105,15 @@ para o picom e devolve o compositor do xfwm4.
 | `~/.local/state/d3bian-init-oasis-xfce/painel-oasis.tar.bz2` | o perfil dos painéis (ilhas ou barra única), carregado pelo `xfce4-panel-profiles` |
 | `~/.config/xfce4/panel/launcher-*`, `docklike-*.rc` | botões da grade e da busca, favoritos do dock |
 | `~/.local/share/icons/hicolor/scalable/apps/d3bian-oasis-*.svg` | ícones do menu, da grade e da busca |
-| `~/.config/picom/picom.conf`, `~/.config/autostart/d3bian-oasis-picom.desktop` | efeitos |
+| `~/.config/picom/picom.conf`, `~/.config/autostart/d3bian-oasis-picom.desktop`, `~/.local/bin/d3bian-picom` | efeitos |
 | `~/.config/rofi/oasis-grade.rasi`, `oasis-busca.rasi`, `~/.local/bin/d3bian-grade` | grade e busca |
 | `~/.local/share/backgrounds/oasis` | papel de parede desenhado no tamanho da tela |
 | `~/.local/bin/d3bian-janelas`, `d3bian-layouts`, `d3bian-bordas` | encaixe, layouts e bordas de janela |
 | `~/.themes` | cópia do tema das janelas com bordas mais largas |
 | `~/.local/share/applications/xfce4-terminal.desktop` | nova janela e nova aba no clique direito do terminal |
-| `~/.config/gtk-3.0/settings.ini`, `gtk.css`, `~/.gtkrc-2.0`, `~/.icons/default/index.theme` | tema, cursor, fonte, cor de destaque e as ilhas |
-| `~/.xprofile`, `~/.config/environment.d/50-appmenu.conf`, `~/.config/xfce4/appmenu.sh` | menu global, só se ligado |
+| `~/.config/gtk-3.0/settings.ini`, `gtk.css`, `~/.icons/default/index.theme` | tema, cursor, fonte, cor de destaque e as ilhas |
+| `~/.gtkrc-2.0` | tema dos programas GTK 2, num bloco marcado |
+| `~/.xsessionrc` (bloco marcado), `~/.config/environment.d/50-appmenu.conf` | menu global, só se ligado |
 | xfconf (`xsettings`, `xfwm4`, `xfce4-panel`, `xfce4-desktop`, `xfce4-keyboard-shortcuts`) | tema, ícones, cursor, fonte, painéis, margens, compositor, área de trabalho e atalhos |
 
 ## Sistemas
@@ -117,14 +124,34 @@ vem do repositório: nada é baixado de fora, clonado ou compilado. O
 `rsvg-convert` (do `librsvg2-bin`) desenha o papel de parede e chega com a
 instalação.
 
+## Menu global
+
+Com `menu_global = sim`, os programas GTK mandam o menu para a barra de cima
+pelo módulo `appmenu-gtk-module`. Ele entra num bloco marcado do
+`~/.xsessionrc`, que o `/etc/X11/Xsession` do Debian lê em toda entrada na
+sessão (LightDM, GDM, SDDM e `startx`). O efeito vem depois de sair e entrar de
+novo na sessão.
+
+O pacote `vala-panel-appmenu-common` põe o mesmo módulo no
+`/etc/profile.d/vala-panel-appmenu.sh`, que o GDM e o SDDM leem. Com o menu
+global desligado e o pacote ainda instalado, o bloco do `~/.xsessionrc` passa a
+tirar o módulo da sessão. Para tirar o pacote também: **Remover também o que
+foi instalado**, ou `sudo apt remove vala-panel-appmenu-common`.
+
 ## Voltar ao que era antes
 
 Em Ajustes, **Voltar ao que era antes**, ou `restaurar --sim`. Os painéis voltam
 pelo `xfce4-panel-profiles`, guardados na primeira vez que a etapa dos painéis
-roda; o picom para, o compositor do xfwm4 volta e o resto vem do diário. Arquivo
-que o projeto criou direto na pasta pessoal (o `~/.gtkrc-2.0`) não é apagado: ele
-aparece na lista para conferir à mão. Com **Remover também o que foi instalado**
-saem os pacotes que o projeto instalou.
+roda; o picom deste projeto para, o compositor do xfwm4 volta e o resto vem do
+diário: os blocos marcados saem do `~/.gtkrc-2.0` e do `~/.xsessionrc` (e o
+arquivo some se só existia pelo projeto). O Flameshot instalado pela tela de
+Programas também volta: o Print Screen, o início com a sessão e o
+`flameshot.ini`. Com **Remover também o que foi instalado** saem os pacotes que
+o projeto instalou.
+
+Os painéis de antes são guardados com `xfce4-panel-profiles save`, e ele deixa
+de fora o botão (lançador) cujo programa já não existia naquela hora: um botão
+que apontava para um programa removido não volta.
 
 ## Para depois
 

@@ -17,4 +17,5 @@ caminhos = [
   "~/.config/rofi",
   "~/.config/autostart",
   "~/.xprofile",
+  "~/.xsessionrc",
 ]

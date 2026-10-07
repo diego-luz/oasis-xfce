@@ -34,8 +34,8 @@ rofi, favoritos do dock e a detecção de vídeo sem aceleração ficam no
 | `papel.py` | desenha o papel de parede em SVG (somas de senos com semente fixa); o `rsvg-convert` passa para PNG |
 | `picom.conf` | modelo do picom 12.5, com o backend, o desfoque e a transparência vindos do contexto |
 | `rofi-grade.rasi`, `rofi-busca.rasi` | temas do rofi 1.7.5 (MIT), com as cores do modo e do destaque |
-| `grade.sh` | o `d3bian-grade`: abre e fecha a grade ou a busca |
-| `appmenu.sh` | carregado pelo `~/.xprofile` para o menu global |
+| `grade.sh` | o `d3bian-grade`: abre e fecha a grade ou a busca (só o rofi que ele abriu) |
+| `picom.sh` | o `d3bian-picom`: inicia e para só o picom do projeto; se ele cair com a tela de pé, religa o compositor do xfwm4 |
 | `icones/*.svg` | ícones do menu, da grade e da busca, desenhados aqui |
 | `janelas.sh`, `layouts.py`, `bordas.py` | encaixe, layouts e bordas, iguais aos do minimal-xfce |
 
@@ -70,9 +70,16 @@ e o `y` são o **centro** do painel, presos dentro do monitor. Por isso:
 - a ilha do meio cresce com o dock (`length-adjust`) e fica sempre no centro.
 
 Painel solto não reserva espaço (sem *struts*), então a receita põe as margens
-do xfwm4: em cima a altura da barra mais dois vãos (42), embaixo a das ilhas
-mais dois vãos (68). Na barra única, só volta a zero a margem que as ilhas
-puseram.
+do xfwm4, depois que o `load` deu certo: em cima a altura da barra mais dois
+vãos (42), embaixo a das ilhas mais dois vãos (68). O painel mede em pixels
+lógicos e o xfwm4 em pixels de verdade, então com a escala 2 do Xfce as margens
+dobram (84 e 136). Na barra única, só volta a zero a margem que as ilhas
+puseram. O `_NET_WORKAREA` não conta as margens, então o `d3bian-janelas` e o
+`d3bian-layouts` descontam as margens do xfwm4 da área útil.
+
+Comandos com o caminho da pasta pessoal levam aspas: no `Exec` dos botões e do
+autostart, as da especificação do `.desktop` (`paineis.exec_desktop`,
+`projeto.exec_desktop`); nos atalhos de teclado, aspas simples de shell.
 
 Os cantos redondos vêm de um bloco no `~/.config/gtk-3.0/gtk.css`
 (`#XfcePanelWindow { border-radius: 14px }`). O seletor é o nome da janela do

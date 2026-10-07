@@ -12,19 +12,16 @@ afetada_por = ["efeitos", "paineis"]
 # numa VM sem 3D costuma deixar as janelas sem redesenhar.
 
 # ---- desligado: volta o compositor do Xfce ----------------------------------
+# so o picom deste projeto para (o d3bian-picom acha pela linha de comando
+# exata); um picom aberto pela pessoa, com outra configuracao, fica
 [[passo]]
 tipo = "script"
 se = "efeitos == desligado"
 dizer = "desligando o picom deste projeto"
 tolera_falha = true
 corpo = '''
-if [ -f "$HOME/.config/autostart/d3bian-oasis-picom.desktop" ]; then
-  pkill -u "$(id -u)" -x picom 2>/dev/null || true
-  # o xfwm4 nao liga o compositor dele enquanto o picom nao sai de vez
-  for _ in 1 2 3 4 5 6 7 8 9 10; do
-    pgrep -u "$(id -u)" -x picom >/dev/null || break
-    sleep 0.5
-  done
+if [ -f "$HOME/.config/autostart/d3bian-oasis-picom.desktop" ] || sh "$CTX_ARQUIVOS/picom.sh" rodando; then
+  sh "$CTX_ARQUIVOS/picom.sh" parar
   echo "picom parado"
 fi
 '''
@@ -35,14 +32,34 @@ se = "efeitos == desligado"
 id = "d3bian-oasis-picom"
 remover = true
 
+# o compositor do xfwm4 volta ao que era antes do projeto (o valor que o diario
+# guardou quando o picom ligou); sem nada no diario, o projeto nunca mexeu nele
 [[passo]]
-tipo = "xfconf"
+tipo = "script"
 se = "efeitos == desligado"
 dizer = "@@picom_aviso@@"
-canal = "xfwm4"
-chave = "/general/use_compositing"
-tipo_valor = "bool"
-valor = "true"
+tolera_falha = true
+corpo = '''
+antes=$(PYTHONPATH="$D3_DIARIO_PAI" "$D3_DIARIO_PYTHON" - <<'PY'
+import importlib, os
+d = importlib.import_module(os.environ["D3_DIARIO_PACOTE"] + ".diario")
+for i in d.ler():
+    if i.get("tipo") == "xfconf" and i.get("canal") == "xfwm4" and i.get("chave") == "/general/use_compositing":
+        # o primeiro e o de antes do projeto; sem a propriedade, o padrao do xfwm4 e ligado
+        print((i.get("valor") or "").strip() if i.get("existia") else "true")
+        break
+PY
+)
+case "$antes" in
+  true|false)
+    d3_xfconf xfwm4 /general/use_compositing bool
+    xfconf-query -c xfwm4 -p /general/use_compositing -n -t bool -s "$antes" 2>/dev/null \
+      || xfconf-query -c xfwm4 -p /general/use_compositing -s "$antes" 2>/dev/null || true
+    echo "compositor do xfwm4: $antes, como era antes do picom"
+    ;;
+esac
+rm -f "$HOME/.local/bin/d3bian-picom"
+'''
 
 # a sombra que o xfwm4 poe nos paineis e retangular e aparece nos cantos
 # redondos das ilhas
@@ -62,12 +79,26 @@ dizer = "@@picom_aviso@@"
 destino = "~/.config/picom/picom.conf"
 modelo = "picom.conf"
 
+# o autostart chama o d3bian-picom, e nao o picom direto: se o picom nao ficar
+# de pe ao entrar na sessao, ele religa o compositor do xfwm4
+[[passo]]
+tipo = "copiar"
+se = "efeitos != desligado"
+origem = "@@arquivos@@/picom.sh"
+destino = "~/.local/bin/d3bian-picom"
+
+[[passo]]
+tipo = "comando"
+se = "efeitos != desligado"
+tolera_falha = true
+argumentos = ["chmod", "755", "@@HOME@@/.local/bin/d3bian-picom"]
+
 [[passo]]
 tipo = "autostart"
 se = "efeitos != desligado"
 id = "d3bian-oasis-picom"
 nome = "picom (d3bian-init-oasis-xfce)"
-comando = "picom --config @@HOME@@/.config/picom/picom.conf"
+comando = "@@picom_exec@@"
 
 [[passo]]
 tipo = "xfconf"
@@ -78,8 +109,8 @@ chave = "/general/use_compositing"
 tipo_valor = "bool"
 valor = "false"
 
-# inicia agora, na sessao aberta. Se o picom nao ficar de pe, o compositor do
-# xfwm4 volta, para a tela nao ficar sem transparencia nenhuma
+# inicia agora, na sessao aberta. Se o picom nao ficar de pe, o d3bian-picom
+# devolve o compositor do xfwm4, para a tela nao ficar sem transparencia nenhuma
 [[passo]]
 tipo = "script"
 se = "efeitos != desligado"
@@ -91,32 +122,33 @@ if [ -z "${DISPLAY:-}" ]; then
   exit 0
 fi
 command -v picom >/dev/null || { echo "atencao: o picom nao esta instalado"; exit 0; }
-d3_processo picom
-pkill -u "$(id -u)" -x picom 2>/dev/null || true
-sleep 1
-setsid --fork picom --config "$HOME/.config/picom/picom.conf" >/dev/null 2>&1 </dev/null
-sleep 2
+p="$HOME/.local/bin/d3bian-picom"
+# o deste projeto reinicia, para ler o picom.conf novo
+"$p" parar
 if pgrep -u "$(id -u)" -x picom >/dev/null; then
+  echo "atencao: ja ha um picom aberto fora deste projeto; ele fica, e o deste inicia na proxima entrada"
+  exit 0
+fi
+# o xfwm4 solta a tela um pouco depois de desligar o compositor dele
+sleep 1
+setsid --fork "$p" >/dev/null 2>&1 </dev/null
+sleep 2
+if "$p" rodando; then
   echo "picom rodando"
 else
-  xfconf-query -c xfwm4 -p /general/use_compositing -s true 2>/dev/null || true
   echo "atencao: o picom nao ficou de pe; o compositor do xfwm4 voltou. Teste com: picom --config ~/.config/picom/picom.conf"
 fi
 '''
 
-# roda antes do diario: para o picom; o diario tira o autostart e devolve o
-# compositor do xfwm4 como estava
+# roda antes do diario: para o picom deste projeto; o diario tira o autostart e
+# devolve o compositor do xfwm4 como estava
 [[desfazer]]
 tipo = "script"
 dizer = "parando o picom"
 tolera_falha = true
 corpo = '''
-if [ -f "$HOME/.config/autostart/d3bian-oasis-picom.desktop" ]; then
-  pkill -u "$(id -u)" -x picom 2>/dev/null || true
-  for _ in 1 2 3 4 5 6 7 8 9 10; do
-    pgrep -u "$(id -u)" -x picom >/dev/null || break
-    sleep 0.5
-  done
+if [ -f "$HOME/.config/autostart/d3bian-oasis-picom.desktop" ] || sh "$CTX_ARQUIVOS/picom.sh" rodando; then
+  sh "$CTX_ARQUIVOS/picom.sh" parar
   echo "picom parado"
 fi
 '''

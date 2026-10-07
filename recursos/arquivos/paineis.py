@@ -20,7 +20,9 @@ centro do painel. Por isso as ilhas dos lados tem largura fixa (a conta do
 centro precisa dela) e a do meio cresce com o dock, centrada. Painel solto nao
 reserva espaco na tela: a saida traz as margens que o xfwm4 precisa guardar
 ("margens CIMA BAIXO") para as janelas maximizadas nao passarem por baixo das
-ilhas, e as que as ilhas usam ("margens_ilhas CIMA BAIXO").
+ilhas, e as que as ilhas usam ("margens_ilhas CIMA BAIXO"). O painel mede em
+pixels logicos e as margens do xfwm4 sao em pixels de verdade: com a escala 2
+do Xfce, elas saem dobradas.
 
 Os .desktop dos botoes (pasta launcher-N) e os favoritos do docklike
 (docklike-N.rc) vao dentro do perfil; o load copia para ~/.config/xfce4/panel.
@@ -34,6 +36,7 @@ from __future__ import annotations
 import argparse
 import io
 import os
+import re
 import sys
 import tarfile
 import tempfile
@@ -87,7 +90,7 @@ class Montador:
         """Espaco vazio fixo nas pontas do painel, longe do canto redondo."""
         return self.plugin("separator", {"expand": ("bool", False), "style": ("uint", 0)})
 
-    def lancador(self, arquivo: str, nome: str, comentario: str, comando: str, icone: str) -> int:
+    def lancador(self, arquivo: str, nome: str, comentario: str, comando: list[str], icone: str) -> int:
         pid = self.plugin("launcher", {
             "items": ("array-string", [arquivo]),
             "show-label": ("bool", False),
@@ -95,7 +98,7 @@ class Montador:
         })
         self.arquivos[f"launcher-{pid}/{arquivo}"] = (
             "[Desktop Entry]\nVersion=1.0\nType=Application\n"
-            f"Name={nome}\nComment={comentario}\nExec={comando}\nIcon={icone}\n"
+            f"Name={nome}\nComment={comentario}\nExec={exec_desktop(comando)}\nIcon={icone}\n"
             "Terminal=false\nStartupNotify=false\n")
         return pid
 
@@ -207,7 +210,7 @@ class Montador:
         # ilha da esquerda: grade e clima, centrados na largura fixa
         ids = [self.separador(),
                self.lancador("oasis-grade.desktop", "Aplicativos", "Todos os aplicativos em grade",
-                             self.a.grade, self.a.icone_grade)]
+                             [self.a.programa, "grade"], self.a.icone_grade)]
         if self.a.clima == "sim":
             if self.tem("weather"):
                 ids.append(self.plugin("weather"))
@@ -239,7 +242,7 @@ class Montador:
                    "tooltip-format": ("string", "%A, %d de %B de %Y"),
                }),
                self.lancador("oasis-busca.desktop", "Buscar", "Buscar aplicativos e janelas",
-                             self.a.busca, self.a.icone_busca),
+                             [self.a.programa, "busca"], self.a.icone_busca),
                self.separador()]
         paineis += 1
         self.painel(
@@ -251,7 +254,7 @@ class Montador:
     def barra_unica(self) -> tuple[int, tuple[int, int]]:
         ids = [i for i in (self.menu(),) if i]
         ids.append(self.lancador("oasis-grade.desktop", "Aplicativos", "Todos os aplicativos em grade",
-                                 self.a.grade, self.a.icone_grade))
+                                 [self.a.programa, "grade"], self.a.icone_grade))
         if self.a.menu_global == "sim" and self.tem("appmenu"):
             ids.append(self.plugin("appmenu", {"bold-application-name": ("bool", True)}))
         ids += [i for i in (self.dock(),) if i]
@@ -272,6 +275,26 @@ class Montador:
         self.props["/panels/dark-mode"] = gvariant("bool", self.a.modo == "escuro")
         linhas = [f"{chave} {valor}" for chave, valor in sorted(self.props.items())]
         return "\n".join(linhas) + "\n", margens
+
+
+def exec_desktop(argumentos: list[str]) -> str:
+    """A linha Exec de um .desktop, com as aspas da especificacao: a pasta
+    pessoal pode ter espaco ("/home/joao silva") ou %.
+
+    O xfce4-panel-profiles load confere o primeiro argumento (GLib.shell_parse_argv,
+    que nao conhece o %%) e tira o botao que nao acha; com % no caminho o
+    programa vai pelo env, que sempre existe.
+    """
+    if "%" in argumentos[0]:
+        argumentos = ["env", *argumentos]
+
+    def um(arg: str) -> str:
+        if not re.fullmatch(r"[A-Za-z0-9_./:=+,@-]+", arg):
+            arg = '"' + re.sub(r'([\\"`$])', r"\\\1", arg) + '"'
+        return arg.replace("%", "%%")
+
+    # o valor do .desktop tem os escapes do proprio arquivo: \ vira \\
+    return " ".join(um(a) for a in argumentos).replace("\\", "\\\\")
 
 
 def gvariant(tipo: str, valor: object) -> str:
@@ -334,6 +357,7 @@ def argumentos(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--apps-dirs", default=":".join(
         [str(casa / ".local/share/applications")] + [f"{d}/applications" for d in dados if d]))
     p.add_argument("--tela", help="x y largura altura (pixels logicos); sem ela, le o xrandr")
+    p.add_argument("--escala", type=int, help="fator de escala do Xfce; sem ele, le o xsettings")
     p.add_argument("--paineis", choices=["ilhas", "barra_unica"], default="ilhas")
     p.add_argument("--lado", choices=["baixo", "topo"], default="baixo")
     p.add_argument("--modo", choices=["escuro", "claro"], default="escuro")
@@ -346,15 +370,17 @@ def argumentos(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--fundo-barra", default="0.08 0.07 0.06 0.62")
     p.add_argument("--destaque", default="#d9a45b")
     p.add_argument("--fonte", default="Sans")
-    p.add_argument("--grade", default="d3bian-grade grade")
-    p.add_argument("--busca", default="d3bian-grade busca")
+    p.add_argument("--programa", default="d3bian-grade",
+                   help="o d3bian-grade, que os botoes da grade e da busca chamam")
     p.add_argument("--icone-grade", default="view-app-grid-symbolic")
     p.add_argument("--icone-busca", default="system-search")
     a = p.parse_args(argv)
     if a.tela:
         a.tela = tuple(int(v) for v in a.tela.split())
+        a.escala = a.escala or 1
     else:
-        a.tela = tela.principal()[:4]
+        *a.tela, escala = tela.principal()
+        a.escala = a.escala or escala
     return a
 
 
@@ -371,9 +397,11 @@ def main(argv: list[str] | None = None) -> int:
         print(aviso)
     gravar_perfil(Path(a.perfil), texto, m.arquivos)
     print("plugins: " + " ".join(m.usados))
-    print(f"margens {cima} {baixo}")
+    # as margens do xfwm4 sao em pixels de verdade, e o painel em pixels logicos
+    s = max(a.escala, 1)
+    print(f"margens {cima * s} {baixo * s}")
     # as das ilhas, para a barra unica saber quais margens foram postas por elas
-    print(f"margens_ilhas {BARRA_ALTURA + 2 * BARRA_VAO} {ILHA_ALTURA + 2 * ILHA_VAO}")
+    print(f"margens_ilhas {(BARRA_ALTURA + 2 * BARRA_VAO) * s} {(ILHA_ALTURA + 2 * ILHA_VAO) * s}")
     return 0
 
 

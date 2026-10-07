@@ -40,7 +40,10 @@ atalho() {
   xfconf-query -c xfce4-keyboard-shortcuts -p "$1" -n -t string -s "$2" 2>/dev/null \
     || xfconf-query -c xfce4-keyboard-shortcuts -p "$1" -s "$2"
 }
-g="$HOME/.local/bin/d3bian-grade"
+# o comando do atalho passa pelo g_shell_parse_argv: o caminho vai entre
+# aspas simples, para a pasta pessoal com espaco ("/home/joao silva")
+q(){ printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
+g=$(q "$HOME/.local/bin/d3bian-grade")
 atalho '/commands/custom/<Super>a'     "$g grade"
 atalho '/commands/custom/<Super>space' "$g busca"
 echo "grade em Super+A e no botao da ilha da esquerda; busca em Super+Espaco e no da direita"

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import functools
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -89,6 +90,18 @@ def _texto_sobre(cor: str) -> str:
         canais.append(v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4)
     lum = 0.2126 * canais[0] + 0.7152 * canais[1] + 0.0722 * canais[2]
     return "#1a1410" if lum > 0.3 else "#ffffff"
+
+
+def exec_desktop(*argumentos: str) -> str:
+    """A linha Exec de um .desktop, com as aspas da especificacao: a pasta
+    pessoal pode ter espaco ("/home/joao silva") ou %. O mesmo do paineis.py."""
+    def um(arg: str) -> str:
+        if not re.fullmatch(r"[A-Za-z0-9_./:=+,@-]+", arg):
+            arg = '"' + re.sub(r'([\\"`$])', r"\\\1", arg) + '"'
+        return arg.replace("%", "%%")
+
+    # o valor do .desktop tem os escapes do proprio arquivo: \ vira \\
+    return " ".join(um(a) for a in argumentos).replace("\\", "\\\\")
 
 
 def notebook() -> bool:
@@ -192,6 +205,8 @@ def _picom(cfg: dict[str, str]) -> dict[str, str]:
         "picom_opacidade": linhas_opacidade,
         "picom_excluir_barra": excluir_barra,
         "picom_aviso": aviso,
+        # o autostart chama o d3bian-picom, que religa o xfwm4 se o picom cair
+        "picom_exec": exec_desktop(str(Path.home() / ".local/bin/d3bian-picom")),
         "render_software": "sim" if software else "nao",
     }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Copia o tema do xfwm4 com bordas mais largas, para agarrar e redimensionar.
 
-Os temas que usamos (WhiteSur, Orchis, Nordic, Gruvbox, Everforest) desenham
+O Orchis, o tema deste projeto (como a maioria dos temas do xfwm4), desenha
 a borda lateral e a de baixo com 1 ou 2 pixels, e so da para redimensionar
 acertando esse fio. O xfwm4 so aceita clique em pixel 100% opaco, entao uma
 borda invisivel nao funciona: a borda nova precisa ser pintada. Ela e pintada

@@ -138,7 +138,7 @@ args=(--perfil "$perfil" --paineis "$CTX_PAINEIS" --lado "$CTX_BARRA_LADO" --mod
       --logo "$CTX_LOGO_MENU" --favoritos "$CTX_FAVORITOS" --destaque "$CTX_DESTAQUE_COR"
       --fundo-ilha "$CTX_PAINEL_FUNDO_ILHA" --fundo-barra "$CTX_PAINEL_FUNDO_BARRA"
       --fonte "$CTX_FONTE_UI"
-      --grade "$HOME/.local/bin/d3bian-grade grade" --busca "$HOME/.local/bin/d3bian-grade busca"
+      --programa "$HOME/.local/bin/d3bian-grade"
       --icone-grade "$CTX_ICONES_DIR/d3bian-oasis-grade.svg"
       --icone-busca "$CTX_ICONES_DIR/d3bian-oasis-busca.svg")
 
@@ -157,7 +157,16 @@ case "$saida" in
   *power-manager-plugin*) d3_xfconf xfce4-power-manager /xfce4-power-manager/show-tray-icon bool ;;
 esac
 
-# margens do xfwm4: o espaco das ilhas, que as janelas maximizadas respeitam
+# o load troca o canal xfce4-panel inteiro pelo xfconfd, escreve os arquivos
+# dos plugins e pede ao painel que reinicie
+if ! xfce4-panel-profiles load "$perfil" 2>/dev/null | tail -3; then
+  echo "o xfce4-panel-profiles nao carregou os paineis; as margens ficam como estavam"
+  exit 1
+fi
+
+# margens do xfwm4, so com os paineis novos de pe: o espaco das ilhas, que as
+# janelas maximizadas respeitam. O paineis.py ja da em pixels de verdade (com
+# a escala do Xfce)
 margem() {
   d3_xfconf xfwm4 "/general/margin_$1" int
   xfconf-query -c xfwm4 -p "/general/margin_$1" -n -t int -s "$2" 2>/dev/null \
@@ -176,12 +185,6 @@ else
   if [ "$atual" = "${ilha_baixo:-x}" ]; then margem bottom 0; fi
 fi
 
-# o load troca o canal xfce4-panel inteiro pelo xfconfd, escreve os arquivos
-# dos plugins e pede ao painel que reinicie
-if ! xfce4-panel-profiles load "$perfil" 2>/dev/null | tail -3; then
-  echo "o xfce4-panel-profiles nao carregou os paineis"
-  exit 1
-fi
 # painel parado (sessao sem ele): sobe agora
 sleep 3
 if [ -n "${DISPLAY:-}" ] && command -v xfce4-panel >/dev/null && ! pgrep -u "$(id -u)" -x xfce4-panel >/dev/null; then

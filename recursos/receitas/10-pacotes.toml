@@ -78,12 +78,13 @@ dizer = "grade de aplicativos e busca"
 pacotes = ["rofi"]
 
 # o mesa-utils traz o glxinfo, que diz se o video tem aceleracao (sem ela o
-# picom fica em modo leve, sem desfoque)
+# picom fica em modo leve, sem desfoque); o xprop (x11-utils) e como o
+# d3bian-picom sabe se a tela ainda esta de pe quando o picom sai
 [[passo]]
 tipo = "apt"
 se = "efeitos != desligado"
 dizer = "picom para desfoque, sombras e cantos"
-pacotes = ["picom", "mesa-utils"]
+pacotes = ["picom", "mesa-utils", "x11-utils"]
 
 [[passo]]
 tipo = "apt"

@@ -7,8 +7,43 @@ afetada_por = ["menu_global"]
 
 # Os pacotes vem na receita 10 e o plugin entra na barra pela 30. Aqui fica o
 # que faz os programas GTK mandarem o menu para a barra: o modulo
-# appmenu-gtk-module carregado no comeco da sessao (como no bigsur-xfce). Os
-# menus so aparecem depois de sair e entrar de novo na sessao.
+# appmenu-gtk-module no GTK_MODULES desde o comeco da sessao. Os menus so
+# aparecem depois de sair e entrar de novo na sessao.
+#
+# O bloco vai no ~/.xsessionrc, que o /etc/X11/Xsession do Debian le em toda
+# entrada (LightDM, GDM, SDDM e startx passam por ele). O ~/.xprofile, da
+# versao anterior, o Debian com LightDM nem le. O Xsession roda com set -e:
+# o bloco nao carrega arquivo nenhum e nao tem comando que possa falhar, senao
+# um erro ali derrubaria a entrada na sessao.
+#
+# O vala-panel-appmenu-common poe o modulo tambem no /etc/profile.d, que o GDM
+# e o SDDM leem. Com o menu global desligado e o pacote ainda instalado, o
+# bloco passa a tirar o modulo da sessao; o pacote sai com "Remover tambem o
+# que foi instalado" (ou sudo apt remove vala-panel-appmenu-common).
+
+# a versao anterior punha um bloco no ~/.xprofile que carregava o
+# ~/.config/xfce4/appmenu.sh; os dois saem nos dois caminhos. O diario ja tem
+# os dois como do projeto, entao o desfazer continua certo
+[[passo]]
+tipo = "script"
+dizer = "conferindo o menu global"
+tolera_falha = true
+corpo = '''
+marca="$CTX_NOME menu global"
+if grep -qxF "# $marca" "$HOME/.xprofile" 2>/dev/null; then
+  # o mesmo tirar_bloco do desfazer: gravacao inteira ou nada, seguindo link
+  PYTHONPATH="$D3_DIARIO_PAI" "$D3_DIARIO_PYTHON" - "$HOME/.xprofile" "$marca" <<'PY'
+import importlib, os, sys
+from pathlib import Path
+d = importlib.import_module(os.environ["D3_DIARIO_PACOTE"] + ".desfazer")
+d.tirar_bloco(Path(sys.argv[1]), sys.argv[2], "#")
+PY
+  echo "bloco da versao anterior tirado do ~/.xprofile"
+fi
+if [ -f "$HOME/.config/xfce4/appmenu.sh" ] && grep -q appmenu-gtk-module "$HOME/.config/xfce4/appmenu.sh"; then
+  rm -f "$HOME/.config/xfce4/appmenu.sh"
+fi
+'''
 
 [[passo]]
 tipo = "script"
@@ -17,19 +52,43 @@ dizer = "desligando o menu global, se estava ligado"
 tolera_falha = true
 corpo = '''
 marca="$CTX_NOME menu global"
+rc="$HOME/.xsessionrc"
 mexeu=nao
-for f in "$HOME/.config/environment.d/50-appmenu.conf" "$HOME/.config/xfce4/appmenu.sh"; do
-  if [ -e "$f" ]; then d3_antes "$f"; rm -f "$f"; mexeu=sim; fi
+# primeiro o bloco, depois os arquivos
+if [ -f /etc/profile.d/vala-panel-appmenu.sh ]; then
+  # o pacote continua instalado e poria o modulo de volta pelo /etc/profile.d
+  if ! grep -qxF "# menu global desligado: o modulo sai" "$rc" 2>/dev/null; then
+    # o passo bloco do motor, com o diario
+    PYTHONPATH="$D3_DIARIO_PAI" "$D3_DIARIO_PYTHON" - "$rc" "$marca" <<'PY'
+import importlib, os, sys
+motor = importlib.import_module(os.environ["D3_DIARIO_PACOTE"] + ".motor")
+m = motor.Motor({}, saida=lambda t: None, receita=os.environ.get("D3_RECEITA", ""),
+                anotar=not os.environ.get("D3_SEM_DIARIO"))
+m.passo_bloco({"destino": sys.argv[1], "marca": sys.argv[2], "comentario": "#", "conteudo": """
+# menu global desligado: o modulo sai
+_d3m=
+for _d3x in $(printf '%s' "${GTK_MODULES:-}" | tr ':' ' '); do
+  if [ "$_d3x" != appmenu-gtk-module ]; then _d3m="${_d3m:+$_d3m:}$_d3x"; fi
 done
-if grep -qxF "# $marca" "$HOME/.xprofile" 2>/dev/null; then
-  d3_antes "$HOME/.xprofile"
-  # o mesmo tirar_bloco do desfazer: gravacao inteira ou nada, seguindo link
-  PYTHONPATH="$D3_DIARIO_PAI" "$D3_DIARIO_PYTHON" - "$HOME/.xprofile" "$marca" <<'PY'
+if [ -n "$_d3m" ]; then GTK_MODULES="$_d3m"; export GTK_MODULES; else unset GTK_MODULES; fi
+unset UBUNTU_MENUPROXY _d3m _d3x
+"""})
+PY
+    echo "o modulo do vala-panel-appmenu (no /etc/profile.d) sai da sessao pelo ~/.xsessionrc"
+    mexeu=sim
+  fi
+elif grep -qxF "# $marca" "$rc" 2>/dev/null; then
+  PYTHONPATH="$D3_DIARIO_PAI" "$D3_DIARIO_PYTHON" - "$rc" "$marca" <<'PY'
 import importlib, os, sys
 from pathlib import Path
 d = importlib.import_module(os.environ["D3_DIARIO_PACOTE"] + ".desfazer")
 d.tirar_bloco(Path(sys.argv[1]), sys.argv[2], "#")
 PY
+  mexeu=sim
+fi
+# anotado como criado quando o menu ligou: o desfazer tira a pasta se ficar vazia
+if [ -e "$HOME/.config/environment.d/50-appmenu.conf" ]; then
+  rm -f "$HOME/.config/environment.d/50-appmenu.conf"
   mexeu=sim
 fi
 if [ "$mexeu" = sim ]; then
@@ -58,13 +117,33 @@ chave = "/Gtk/ShellShowsAppmenu"
 tipo_valor = "bool"
 valor = "true"
 
+# o Xsession le o ~/.xsessionrc ao entrar, e o que ele exporta chega tambem aos
+# programas abertos pelo D-Bus (dbus-update-activation-environment)
 [[passo]]
-tipo = "copiar"
+tipo = "bloco"
 se = "menu_global == sim"
-origem = "@@arquivos@@/appmenu.sh"
-destino = "~/.config/xfce4/appmenu.sh"
+dizer = "carregando o modulo GTK no inicio da sessao"
+destino = "~/.xsessionrc"
+comentario = "#"
+marca = "@@NOME@@ menu global"
+conteudo = '''
+case ":${GTK_MODULES:-}:" in
+  *:appmenu-gtk-module:*) ;;
+  *) GTK_MODULES="${GTK_MODULES:+$GTK_MODULES:}appmenu-gtk-module" ;;
+esac
+UBUNTU_MENUPROXY=1
+export GTK_MODULES UBUNTU_MENUPROXY
+'''
 
-# para os programas iniciados pelo systemd da sessao
+# para os programas iniciados pelo systemd da sessao. A pasta e anotada antes,
+# para o desfazer tirar se ficar vazia
+[[passo]]
+tipo = "script"
+se = "menu_global == sim"
+corpo = '''
+d3_pasta "$HOME/.config/environment.d"
+'''
+
 [[passo]]
 tipo = "arquivo"
 se = "menu_global == sim"
@@ -72,16 +151,4 @@ destino = "~/.config/environment.d/50-appmenu.conf"
 conteudo = '''
 GTK_MODULES=appmenu-gtk-module
 UBUNTU_MENUPROXY=1
-'''
-
-# e para os da sessao grafica, que le o ~/.xprofile ao entrar
-[[passo]]
-tipo = "bloco"
-se = "menu_global == sim"
-dizer = "carregando o modulo GTK no inicio da sessao"
-destino = "~/.xprofile"
-comentario = "#"
-marca = "@@NOME@@ menu global"
-conteudo = '''
-. "$HOME/.config/xfce4/appmenu.sh"
 '''
