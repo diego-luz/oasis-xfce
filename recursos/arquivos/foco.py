@@ -34,7 +34,7 @@ import gi
 
 gi.require_version("Gdk", "3.0")
 gi.require_version("Wnck", "3.0")
-from gi.repository import Gdk, GLib, Wnck  # noqa: E402
+from gi.repository import Gdk, Gio, GLib, Wnck  # noqa: E402
 
 ESTADO = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "d3bian-oasis/foco.json"
 MARGENS = ("top", "bottom")
@@ -42,7 +42,40 @@ MARGENS = ("top", "bottom")
 SNAP_EMBAIXO = {"8"}
 
 
+# tipo do xfconf-query -> tipo do D-Bus
+TIPOS = {"int": "i", "uint": "u", "string": "s", "bool": "b"}
+_barramento = None
+
+
 def xfconf(canal: str, prop: str, valor=None, tipo: str = "") -> str:
+    """Le ou escreve uma chave. Direto no D-Bus: um xfconf-query por chave,
+    umas vinte a cada troca, somava meio segundo antes do painel se mexer."""
+    global _barramento
+    try:
+        if _barramento is None:
+            _barramento = Gio.bus_get_sync(Gio.BusType.SESSION)
+        if valor is None:
+            r = _barramento.call_sync("org.xfce.Xfconf", "/org/xfce/Xfconf", "org.xfce.Xfconf",
+                                      "GetProperty", GLib.Variant("(ss)", (canal, prop)),
+                                      None, Gio.DBusCallFlags.NONE, 2000, None)
+            v = r.unpack()[0]
+            return "\n".join(map(str, v)) if isinstance(v, list) else str(v)
+        if tipo in TIPOS:
+            _barramento.call_sync("org.xfce.Xfconf", "/org/xfce/Xfconf", "org.xfce.Xfconf",
+                                  "SetProperty",
+                                  GLib.Variant("(ssv)", (canal, prop, GLib.Variant(TIPOS[tipo], int(valor) if tipo in ("int", "uint") else valor))),
+                                  None, Gio.DBusCallFlags.NONE, 2000, None)
+            return ""
+    except GLib.Error as e:
+        # chave que nao existe: o mesmo vazio do xfconf-query
+        if valor is None and "PropertyNotFound" in str(e):
+            return ""
+    except (TypeError, ValueError):
+        pass
+    return xfconf_query(canal, prop, valor, tipo)
+
+
+def xfconf_query(canal: str, prop: str, valor=None, tipo: str = "") -> str:
     args = ["xfconf-query", "-c", canal, "-p", prop]
     if valor is not None:
         args += (["-n", "-t", tipo] if tipo else []) + ["-s", str(valor)]
@@ -158,7 +191,7 @@ class Foco:
         # move a janela a cada pixel) viram uma so
         if self.agenda:
             GLib.source_remove(self.agenda)
-        self.agenda = GLib.timeout_add(150, self.avaliar)
+        self.agenda = GLib.timeout_add(80, self.avaliar)
 
     def visivel(self) -> bool:
         j = self.janela
@@ -245,7 +278,7 @@ class Foco:
             self.remaximizar()
         if recolher:
             # o painel precisa assentar na borda antes de esconder
-            GLib.timeout_add(300, self.recolher, recolher)
+            GLib.timeout_add(150, self.recolher, recolher)
 
     def recolher(self, lista: list[str]) -> bool:
         for painel in lista:
