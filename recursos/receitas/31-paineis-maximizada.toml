@@ -7,7 +7,8 @@ requer = ["30"]
 afetada_por = ["paineis_maximizada", "paineis", "barra_lado", "clima", "menu_global", "logo", "modo", "destaque", "fonte"]
 
 # O d3bian-foco acompanha a janela ativa: maximizada, ele encosta os paineis na
-# borda, zera as margens do xfwm4 e manda esconder; fora disso devolve tudo.
+# borda, zera as margens do xfwm4 e manda esconder; passando por cima de uma
+# barra sem maximizar, esconde so os paineis daquela borda; fora disso devolve.
 # Parar e sempre pelo TERM, que e quando ele devolve os paineis.
 
 [[passo]]
@@ -63,7 +64,7 @@ comando = "@@HOME@@/.local/bin/d3bian-foco"
 [[passo]]
 tipo = "script"
 se = "paineis_maximizada == esconder"
-dizer = "janela maximizada esconde os paineis; o mouse na borda traz de volta"
+dizer = "janela maximizada, ou por cima de uma barra, esconde os paineis; o mouse na borda traz de volta"
 tolera_falha = true
 corpo = '''
 [ -n "${DISPLAY:-}" ] || { echo "sem sessao grafica; vale ao entrar de novo"; exit 0; }
