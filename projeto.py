@@ -77,6 +77,8 @@ LOGIN_RAIZ = "/usr/share/backgrounds/d3bian-oasis"
 LOGIN_TEMA = "/usr/share/themes/d3bian-oasis-login"
 LOGIN_GREETER = "/etc/xdg/lightdm/lightdm-gtk-greeter.conf.d/90-d3bian-oasis.conf"
 LOGIN_LIGHTDM = "/etc/lightdm/lightdm.conf.d/90-d3bian-oasis.conf"
+# a imagem que a pagina de ajustes guarda para o fundo do login
+LOGIN_PROPRIA = PAPEIS_DIR / "login-propria.jpg"
 
 # Fora da pasta pessoal, o desfazer so apaga o que estiver aqui: o que a
 # receita da tela de login cria (ver nucleo.md, Seguranca)
@@ -290,14 +292,40 @@ def contexto(cfg: dict[str, str]) -> dict[str, str]:
     return ctx
 
 
+def _imagem_propria() -> Path | None:
+    """A imagem escolhida na pagina; sem ela, login.jpg, .jpeg ou .png na
+    pasta de imagens da pessoa."""
+    if LOGIN_PROPRIA.is_file():
+        return LOGIN_PROPRIA
+    try:
+        pasta = subprocess.run(["xdg-user-dir", "PICTURES"], capture_output=True,
+                               text=True, timeout=5).stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        pasta = ""
+    for base in [Path(pasta)] if pasta else [Path.home() / "Imagens", Path.home() / "Pictures"]:
+        for nome in ("login.jpg", "login.jpeg", "login.png", "login.JPG", "login.PNG"):
+            if (base / nome).is_file():
+                return base / nome
+    return None
+
+
 def _login(cfg: dict[str, str], ctx: dict[str, str]) -> dict[str, str]:
     """O que a receita da tela de login precisa."""
     # os campos sao de vidro claro sobre a foto: o tema por baixo e sempre o escuro
     base = Path("/usr/share/themes/Orchis-Dark/gtk-3.0/gtk.css")
     face = Path.home() / ".face"
     avatar = face if face.is_file() else caminhos.ARQUIVOS / "icones" / "d3bian-oasis-logo.svg"
-    # papel "manter": o fundo e o que o xfdesktop estiver mostrando
-    fundo = ctx["papel_arquivo"] if cfg.get("papel", "dunas") != "manter" else ""
+    # de onde vem o fundo: o papel da area de trabalho (com "manter", o que o
+    # xfdesktop mostra; a receita procura), um desenho do oasis feito na hora
+    # ou a imagem escolhida na pagina (ou login.jpg/.png da pasta Imagens)
+    escolha = cfg.get("login_fundo", "papel")
+    fundo, desenho = "", ""
+    if escolha == "propria":
+        fundo = str(_imagem_propria() or "")
+    elif escolha != "papel" and escolha.count("-") == 1:
+        desenho = escolha.replace("-", " ")
+    elif cfg.get("papel", "dunas") != "manter":
+        fundo = ctx["papel_arquivo"]
     return {
         # montagem numa pasta da pessoa, fechada; o root copia de la
         "login_dir": str(caminhos.ESTADO_DIR / "login"),
@@ -307,6 +335,8 @@ def _login(cfg: dict[str, str], ctx: dict[str, str]) -> dict[str, str]:
         "login_lightdm_conf": LOGIN_LIGHTDM,
         "login_tema_base": str(base) if base.is_file() else "",
         "login_fundo_arquivo": fundo,
+        # "cor estilo" para o papel.py, quando o fundo e um desenho do oasis
+        "login_fundo_desenho": desenho,
         "login_avatar_arquivo": str(avatar),
         "login_esconder_usuarios": "false" if cfg.get("login_usuarios") == "lista" else "true",
     }

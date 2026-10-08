@@ -126,6 +126,7 @@ titulo = "Cores do papel de parede"
 ajuda = "Deserto ao sol, oasis verde-agua, crepusculo lilas ou noite azul"
 grupo = "Area de trabalho"
 nomes = { deserto = "Deserto", oasis = "Oasis", crepusculo = "Crepusculo", noite = "Noite" }
+exemplos = { "deserto" = "login_fundo-deserto-dunas.jpg", "oasis" = "login_fundo-oasis-dunas.jpg", "crepusculo" = "login_fundo-crepusculo-dunas.jpg", "noite" = "login_fundo-noite-dunas.jpg" }
 
 [[opcao]]
 chave = "icones_area"
@@ -151,6 +152,16 @@ valores = ["sim", "nao"]
 titulo = "Tela de login do oasis"
 ajuda = "O papel de parede no fundo, foto redonda e campos de vidro; vale tambem para a tela de bloqueio"
 grupo = "Tela de login"
+
+[[opcao]]
+chave = "login_fundo"
+padrao = "papel"
+valores = ["papel", "deserto-dunas", "deserto-degrade", "oasis-dunas", "oasis-degrade", "crepusculo-dunas", "crepusculo-degrade", "noite-dunas", "noite-degrade", "propria"]
+titulo = "Fundo da tela de login"
+ajuda = "O papel da area de trabalho, um dos desenhos do oasis, ou uma imagem sua: escolha pelo botao abaixo"
+grupo = "Tela de login"
+nomes = { "papel" = "O mesmo da area de trabalho", "propria" = "Minha imagem", "deserto-dunas" = "Deserto, dunas", "deserto-degrade" = "Deserto, degrade", "oasis-dunas" = "Oasis, dunas", "oasis-degrade" = "Oasis, degrade", "crepusculo-dunas" = "Crepusculo, dunas", "crepusculo-degrade" = "Crepusculo, degrade", "noite-dunas" = "Noite, dunas", "noite-degrade" = "Noite, degrade" }
+exemplos = { "deserto-dunas" = "login_fundo-deserto-dunas.jpg", "deserto-degrade" = "login_fundo-deserto-degrade.jpg", "oasis-dunas" = "login_fundo-oasis-dunas.jpg", "oasis-degrade" = "login_fundo-oasis-degrade.jpg", "crepusculo-dunas" = "login_fundo-crepusculo-dunas.jpg", "crepusculo-degrade" = "login_fundo-crepusculo-degrade.jpg", "noite-dunas" = "login_fundo-noite-dunas.jpg", "noite-degrade" = "login_fundo-noite-degrade.jpg" }
 
 [[opcao]]
 chave = "login_desfoque"

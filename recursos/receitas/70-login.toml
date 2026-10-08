@@ -3,8 +3,8 @@ id = "70"
 nome = "login"
 titulo = "Tela de login e de bloqueio"
 requer = ["20", "40"]
-afetada_por = ["login", "login_desfoque", "login_usuarios", "destaque", "fonte", "cursor",
-               "papel", "cor_papel"]
+afetada_por = ["login", "login_fundo", "login_desfoque", "login_usuarios", "destaque", "fonte",
+               "cursor", "papel", "cor_papel"]
 
 # Trazida do bigsur: fundo do papel de parede (desfocado ou nao), foto redonda,
 # campos de vidro e o botao de entrar na cor de destaque. A tela de bloqueio e
@@ -88,8 +88,18 @@ se = "login == sim"
 dizer = "preparando o fundo e a foto"
 corpo = '''
 d="$CTX_LOGIN_DIR"
-# o papel de parede do oasis; com "manter", o que o xfdesktop mostra agora
 origem="$CTX_LOGIN_FUNDO_ARQUIVO"
+# um desenho do oasis escolhido so para o login: feito agora, em Full HD
+if [ -n "$CTX_LOGIN_FUNDO_DESENHO" ]; then
+  read -r cor estilo <<< "$CTX_LOGIN_FUNDO_DESENHO"
+  python3 "$CTX_ARQUIVOS/papel.py" --estilo "$estilo" --cor "$cor" --largura 1920 --altura 1080 > "$d/desenho.svg"
+  rsvg-convert -w 1920 -h 1080 -o "$d/desenho.png" "$d/desenho.svg"
+  rm -f "$d/desenho.svg"
+  origem="$d/desenho.png"
+elif [ "$CTX_LOGIN_FUNDO" = "propria" ] && [ -z "$origem" ]; then
+  echo "atencao: nenhuma imagem escolhida (nem login.jpg na pasta Imagens); vai o papel da area de trabalho"
+fi
+# o papel de parede do oasis; com "manter", o que o xfdesktop mostra agora
 if [ -z "$origem" ] || [ ! -f "$origem" ]; then
   prop=$(xfconf-query -c xfce4-desktop -l 2>/dev/null | grep '/last-image$' | head -1 || true)
   [ -n "$prop" ] && origem=$(xfconf-query -c xfce4-desktop -p "$prop" 2>/dev/null || true)
