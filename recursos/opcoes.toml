@@ -45,7 +45,7 @@ chave = "paineis"
 padrao = "ilhas"
 valores = ["ilhas", "barra_unica"]
 titulo = "Paineis"
-ajuda = "Ilhas: barra fina em cima e tres ilhas soltas embaixo. Barra unica: uma so, colada na borda"
+ajuda = "Ilhas: barra fina em cima e tres ilhas soltas embaixo. Barra unica: uma so, colada na borda. No dock, para mudar a ordem dos icones, segure Ctrl, clique no icone, solte o Ctrl e arraste ate o lugar; o botao do meio (ou Shift + clique) abre outra janela do programa. Super+A abre a grade de aplicativos e Super+Espaco a busca"
 grupo = "Paineis"
 nomes = { ilhas = "Em ilhas", barra_unica = "Barra unica" }
 
@@ -106,7 +106,7 @@ chave = "janelas"
 padrao = "sim"
 valores = ["sim", "nao"]
 titulo = "Encaixe e bordas de janela"
-ajuda = "Super e setas para metades, Super+1 a 4 para quartos, layouts no Super+Z e bordas mais largas"
+ajuda = "Super e setas para metades, Super+1 a 4 para quartos, layouts no Super+Z e bordas mais largas. Alt + arrastar move a janela e Alt + botao direito arrastado redimensiona, de qualquer ponto dela"
 grupo = "Janelas"
 
 [[opcao]]
@@ -142,7 +142,7 @@ chave = "terminal"
 padrao = "sim"
 valores = ["sim", "nao"]
 titulo = "Terminal caprichado"
-ajuda = "O visual do bigsur: fundo translucido, cores One Dark e JetBrains Mono"
+ajuda = "O visual do bigsur: fundo translucido, cores One Dark e JetBrains Mono. Clique direito no icone do terminal abre nova janela ou nova aba"
 grupo = "Terminal"
 
 [[opcao]]
