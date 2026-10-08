@@ -3,7 +3,7 @@ id = "70"
 nome = "login"
 titulo = "Tela de login e de bloqueio"
 requer = ["20", "40"]
-afetada_por = ["login", "login_fundo", "login_desfoque", "login_usuarios", "destaque", "fonte",
+afetada_por = ["login", "login_fundo", "login_desfoque", "login_escurecer", "login_usuarios", "destaque", "fonte",
                "cursor", "papel", "cor_papel"]
 
 # Trazida do bigsur: fundo do papel de parede (desfocado ou nao), foto redonda,
@@ -105,16 +105,18 @@ if [ -z "$origem" ] || [ ! -f "$origem" ]; then
   [ -n "$prop" ] && origem=$(xfconf-query -c xfce4-desktop -p "$prop" 2>/dev/null || true)
 fi
 if [ -n "$origem" ] && [ -f "$origem" ]; then
-  # os papeis do oasis sao claros (areia, por do sol) e o texto da tela e
-  # branco: o fundo escurece um pouco mais que no bigsur
+  # o texto da tela e branco: o quanto escurecer o fundo e a pessoa quem diz
+  esc="${CTX_LOGIN_ESCURECER:-30}"
+  case "$esc" in ''|*[!0-9]*) esc=30 ;; esac
+  [ "$esc" -le 90 ] || esc=90
   if [ "$CTX_LOGIN_DESFOQUE" = "sim" ]; then
     # reduzir antes de desfocar deixa o desfoque rapido; o greeter estica de volta
-    convert "$origem[0]" -resize '1920x1200^' -blur 0x24 -fill black -colorize 32% \
+    convert "$origem[0]" -resize '1920x1200^' -blur 0x24 -fill black -colorize "$esc%" \
             -quality 88 "$d/fundo.jpg"
   else
-    convert "$origem[0]" -resize '2560x1600>' -fill black -colorize 22% -quality 90 "$d/fundo.jpg"
+    convert "$origem[0]" -resize '2560x1600>' -fill black -colorize "$esc%" -quality 90 "$d/fundo.jpg"
   fi
-  echo "fundo: $(basename "$origem")$([ "$CTX_LOGIN_DESFOQUE" = "sim" ] && echo ', desfocado')"
+  echo "fundo: $(basename "$origem")$([ "$CTX_LOGIN_DESFOQUE" = "sim" ] && echo ', desfocado'), escurecido $esc%"
 else
   convert -size 1920x1200 gradient:'#c9a27a'-'#3b2f2a' "$d/fundo.jpg"
   echo "nao achei o papel de parede; usando um degrade de areia"
