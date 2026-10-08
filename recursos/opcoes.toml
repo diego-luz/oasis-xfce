@@ -77,11 +77,20 @@ grupo = "Paineis"
 [[opcao]]
 chave = "logo"
 padrao = "oasis"
-valores = ["oasis", "debian"]
+valores = ["oasis", "debian", "debian-cor", "tux", "tux-cor"]
 titulo = "Icone do menu"
-ajuda = "O botao do menu no canto de cima"
+ajuda = "O botao do menu no canto de cima; os monocromaticos acompanham o claro ou escuro"
 grupo = "Paineis"
-nomes = { oasis = "Sol e duna", debian = "Logo do Debian" }
+nomes = { oasis = "Sol e duna", debian = "Debian (claro ou escuro)", debian-cor = "Debian vermelho", tux = "Tux (claro ou escuro)", tux-cor = "Tux colorido" }
+
+[[opcao]]
+chave = "paineis_maximizada"
+padrao = "esconder"
+valores = ["esconder", "manter"]
+titulo = "Janela maximizada"
+ajuda = "Esconder: a janela maximizada ocupa a tela toda e os paineis voltam com o mouse na borda"
+grupo = "Paineis"
+nomes = { esconder = "Esconde os paineis", manter = "Paineis sempre a vista" }
 
 [[opcao]]
 chave = "efeitos"
@@ -126,3 +135,37 @@ titulo = "Icones na area de trabalho"
 ajuda = "Sem icone nenhum o papel de parede aparece inteiro"
 grupo = "Area de trabalho"
 nomes = { nenhum = "Nenhum", so_removiveis = "So pendrives e discos", tudo = "Tudo, como vem" }
+
+[[opcao]]
+chave = "terminal"
+padrao = "sim"
+valores = ["sim", "nao"]
+titulo = "Terminal caprichado"
+ajuda = "O visual do bigsur: fundo translucido, cores One Dark e JetBrains Mono"
+grupo = "Terminal"
+
+[[opcao]]
+chave = "login"
+padrao = "sim"
+valores = ["sim", "nao"]
+titulo = "Tela de login do oasis"
+ajuda = "O papel de parede no fundo, foto redonda e campos de vidro; vale tambem para a tela de bloqueio"
+grupo = "Tela de login"
+
+[[opcao]]
+chave = "login_desfoque"
+padrao = "sim"
+valores = ["sim", "nao"]
+titulo = "Fundo desfocado"
+ajuda = "A imagem fica embacada atras dos campos, como no macOS"
+grupo = "Tela de login"
+
+[[opcao]]
+chave = "login_usuarios"
+padrao = "campos"
+valores = ["campos", "lista"]
+titulo = "Como entrar"
+ajuda = "Digitar nome e senha, ou escolher o usuario numa lista"
+grupo = "Tela de login"
+nomes = { campos = "Nome e senha", lista = "Lista de usuarios" }
+

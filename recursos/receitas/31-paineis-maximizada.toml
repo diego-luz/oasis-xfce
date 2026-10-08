@@ -1,0 +1,81 @@
+[modulo]
+id = "31"
+nome = "paineis-maximizada"
+titulo = "Paineis escondidos com a janela maximizada"
+requer = ["30"]
+# o 30 recarrega os paineis e para o d3bian-foco; daqui ele volta
+afetada_por = ["paineis_maximizada", "paineis", "barra_lado", "clima", "menu_global", "logo", "modo", "destaque", "fonte"]
+
+# O d3bian-foco acompanha a janela ativa: maximizada, ele encosta os paineis na
+# borda, zera as margens do xfwm4 e manda esconder; fora disso devolve tudo.
+# Parar e sempre pelo TERM, que e quando ele devolve os paineis.
+
+[[passo]]
+tipo = "script"
+dizer = "parando o d3bian-foco, se estiver rodando"
+tolera_falha = true
+corpo = '''
+pkill -TERM -x -u "$(id -u)" d3bian-foco 2>/dev/null || exit 0
+for _ in $(seq 30); do pgrep -x -u "$(id -u)" d3bian-foco >/dev/null || exit 0; sleep 0.1; done
+echo "o d3bian-foco nao saiu a tempo"
+'''
+
+[[passo]]
+tipo = "autostart"
+se = "paineis_maximizada != esconder"
+id = "d3bian-oasis-foco"
+remover = true
+
+[[passo]]
+tipo = "script"
+se = "paineis_maximizada != esconder"
+tolera_falha = true
+corpo = '''
+if [ -e "$HOME/.local/bin/d3bian-foco" ]; then d3_antes "$HOME/.local/bin/d3bian-foco"; fi
+rm -f "$HOME/.local/bin/d3bian-foco"
+echo "paineis sempre a vista"
+'''
+
+[[passo]]
+tipo = "apt"
+se = "paineis_maximizada == esconder"
+pacotes = ["gir1.2-wnck-3.0", "python3-gi"]
+
+[[passo]]
+tipo = "copiar"
+se = "paineis_maximizada == esconder"
+origem = "@@arquivos@@/foco.py"
+destino = "~/.local/bin/d3bian-foco"
+
+[[passo]]
+tipo = "comando"
+se = "paineis_maximizada == esconder"
+tolera_falha = true
+argumentos = ["chmod", "755", "@@HOME@@/.local/bin/d3bian-foco"]
+
+[[passo]]
+tipo = "autostart"
+se = "paineis_maximizada == esconder"
+id = "d3bian-oasis-foco"
+nome = "Paineis escondidos com a janela maximizada"
+comando = "@@HOME@@/.local/bin/d3bian-foco"
+
+[[passo]]
+tipo = "script"
+se = "paineis_maximizada == esconder"
+dizer = "janela maximizada esconde os paineis; o mouse na borda traz de volta"
+tolera_falha = true
+corpo = '''
+[ -n "${DISPLAY:-}" ] || { echo "sem sessao grafica; vale ao entrar de novo"; exit 0; }
+setsid --fork "$HOME/.local/bin/d3bian-foco" >/dev/null 2>&1 < /dev/null
+'''
+
+# parado pelo TERM, ele devolve as posicoes e as margens antes do 30 desfazer
+[[desfazer]]
+tipo = "script"
+dizer = "parando o d3bian-foco"
+tolera_falha = true
+corpo = '''
+pkill -TERM -x -u "$(id -u)" d3bian-foco 2>/dev/null || exit 0
+for _ in $(seq 30); do pgrep -x -u "$(id -u)" d3bian-foco >/dev/null || exit 0; sleep 0.1; done
+'''

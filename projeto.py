@@ -19,6 +19,8 @@ import subprocess
 from pathlib import Path
 from typing import Callable
 
+from . import caminhos
+
 # o pacote orchis-gtk-theme do Debian traz Orchis, Orchis-Light, Orchis-Dark e
 # as variantes -Compact (e -hdpi/-xhdpi), todas com o destaque azul de fabrica:
 # as variantes de cor do Orchis (Purple, Pink, Teal...) nao vem no pacote
@@ -69,12 +71,20 @@ FAVORITOS = ["thunar", "xfce4-terminal", "firefox-esr", "firefox", "chromium",
 PAPEIS_DIR = Path.home() / ".local/share/backgrounds/oasis"
 ICONES_DIR = Path.home() / ".local/share/icons/hicolor/scalable/apps"
 
-# Fora da pasta pessoal, o desfazer so apaga o que estiver aqui. As receitas
-# deste projeto nao criam nada fora dela (ver nucleo.md, Seguranca)
-APAGAVEIS_FORA_DE_CASA: set[str] = set()
+# Tela de login: o lightdm nao le a pasta pessoal (no Debian ela e fechada),
+# entao o fundo, a foto e o tema vao para pastas do sistema
+LOGIN_RAIZ = "/usr/share/backgrounds/d3bian-oasis"
+LOGIN_TEMA = "/usr/share/themes/d3bian-oasis-login"
+LOGIN_GREETER = "/etc/xdg/lightdm/lightdm-gtk-greeter.conf.d/90-d3bian-oasis.conf"
+LOGIN_LIGHTDM = "/etc/lightdm/lightdm.conf.d/90-d3bian-oasis.conf"
 
-# Arquivo de sistema que as receitas alteram: nenhum
-RESTAURAVEIS_FORA_DE_CASA: set[str] = set()
+# Fora da pasta pessoal, o desfazer so apaga o que estiver aqui: o que a
+# receita da tela de login cria (ver nucleo.md, Seguranca)
+APAGAVEIS_FORA_DE_CASA: set[str] = {LOGIN_RAIZ, LOGIN_TEMA, LOGIN_GREETER, LOGIN_LIGHTDM}
+
+# Arquivo de sistema que as receitas alteram: so os da tela de login, que
+# podem existir de uma instalacao anterior
+RESTAURAVEIS_FORA_DE_CASA: set[str] = {LOGIN_GREETER, LOGIN_LIGHTDM}
 
 
 def _hex_rgb(cor: str) -> tuple[int, int, int]:
@@ -220,8 +230,18 @@ def contexto(cfg: dict[str, str]) -> dict[str, str]:
     rofi = ROFI[modo]
     papel = cfg.get("papel", "dunas")
     cor_papel = cfg.get("cor_papel", "deserto")
-    logo = (str(ICONES_DIR / "d3bian-oasis-logo.svg") if cfg.get("logo", "oasis") == "oasis"
-            else "distributor-logo-debian")
+    # o logo vai para a pasta de icones da pessoa: o painel le o arquivo a
+    # cada sessao, e o projeto pode rodar de um pendrive. O monocromatico e o
+    # oposto da barra: barra escura pede desenho claro
+    escolha = cfg.get("logo", "oasis")
+    if escolha == "oasis":
+        logo_arquivo = "d3bian-oasis-logo.svg"
+        logo_origem = caminhos.ARQUIVOS / "icones" / logo_arquivo
+    else:
+        variante = escolha if escolha.endswith("-cor") else f"{escolha}-{'claro' if escuro else 'escuro'}"
+        logo_arquivo = f"d3bian-oasis-{variante}.svg"
+        logo_origem = caminhos.ARQUIVOS / "logos" / f"{variante}.svg"
+    logo = str(ICONES_DIR / logo_arquivo)
     ctx = {
         "gtk_tema": TEMA[modo],
         "gtk_esquema": "prefer-dark" if escuro else "default",
@@ -245,6 +265,7 @@ def contexto(cfg: dict[str, str]) -> dict[str, str]:
         "painel_hover": "rgba(255, 255, 255, 0.10)" if escuro else "rgba(0, 0, 0, 0.07)",
         "favoritos": ";".join(FAVORITOS),
         "logo_menu": logo,
+        "logo_origem": str(logo_origem),
         "icones_dir": str(ICONES_DIR),
         "notebook": "sim" if notebook() else "nao",
         "rofi_fundo": rofi[0],
@@ -265,7 +286,30 @@ def contexto(cfg: dict[str, str]) -> dict[str, str]:
         "mostrar_arquivos": "true" if cfg.get("icones_area") == "tudo" else "false",
     }
     ctx.update(_picom(cfg))
+    ctx.update(_login(cfg, ctx))
     return ctx
+
+
+def _login(cfg: dict[str, str], ctx: dict[str, str]) -> dict[str, str]:
+    """O que a receita da tela de login precisa."""
+    # os campos sao de vidro claro sobre a foto: o tema por baixo e sempre o escuro
+    base = Path("/usr/share/themes/Orchis-Dark/gtk-3.0/gtk.css")
+    face = Path.home() / ".face"
+    avatar = face if face.is_file() else caminhos.ARQUIVOS / "icones" / "d3bian-oasis-logo.svg"
+    # papel "manter": o fundo e o que o xfdesktop estiver mostrando
+    fundo = ctx["papel_arquivo"] if cfg.get("papel", "dunas") != "manter" else ""
+    return {
+        # montagem numa pasta da pessoa, fechada; o root copia de la
+        "login_dir": str(caminhos.ESTADO_DIR / "login"),
+        "login_raiz": LOGIN_RAIZ,
+        "login_tema_dir": LOGIN_TEMA,
+        "login_greeter_conf": LOGIN_GREETER,
+        "login_lightdm_conf": LOGIN_LIGHTDM,
+        "login_tema_base": str(base) if base.is_file() else "",
+        "login_fundo_arquivo": fundo,
+        "login_avatar_arquivo": str(avatar),
+        "login_esconder_usuarios": "false" if cfg.get("login_usuarios") == "lista" else "true",
+    }
 
 
 def verificacoes(add: Callable[..., None]) -> None:
