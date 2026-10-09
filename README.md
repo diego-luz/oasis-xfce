@@ -51,7 +51,6 @@ python3 -m d3bian_init_oasis_xfce        # pede a senha uma vez e abre o painel
 - **Papel de parede** de dunas ou degradê, em quatro paletas, desenhado no tamanho
   da sua tela
 - **Programas úteis**: uma lista pronta do repositório oficial do Debian, conforme o hardware
-- **Voltar ao que era antes** com o diário de alterações do [modelo](https://git.saberdl.dev.br/d3bian-temas/modelo)
 
 <!-- imagens: gerado a partir do teste num Debian 13; refazer, nao editar a mao -->
 ## Telas
