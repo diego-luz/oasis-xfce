@@ -138,6 +138,32 @@ global desligado e o pacote ainda instalado, o bloco do `~/.xsessionrc` passa a
 tirar o módulo da sessão. Para tirar o pacote também: **Remover também o que
 foi instalado**, ou `sudo apt remove vala-panel-appmenu-common`.
 
+## Um tema Xfce por vez
+
+Os temas Xfce da família (bigsur-xfce, bigsur-minimalista-xfce, minimal-xfce,
+paleta-xfce e oasis-xfce) usam os mesmos scripts (`d3bian-janelas`,
+`d3bian-layouts`, `d3bian-bordas`, `d3bian-picom`), o mesmo `picom.conf` e os
+mesmos ajustes do painel, do xfwm4, dos atalhos e do GTK. Um por cima do outro
+estragaria o "voltar" do primeiro, então a instalação é recusada (saída 1)
+enquanto outro deles estiver aplicado nesta conta:
+
+```
+o tema bigsur-xfce está instalado nesta conta; use o 'voltar' dele antes (python3 -m d3bian_init_bigsur_xfce restaurar) ou troque de vez com python3 -m d3bian_init_oasis_xfce aplicar --trocar
+```
+
+Conta como aplicado o tema com etapa marcada em `~/.local/state/<pasta>/aplicado/`
+ou com linha no `diario.jsonl` mais nova que essa pasta: só simulação não conta,
+e depois de um `restaurar` completo ele deixa de contar. Rodar de novo este mesmo
+projeto (`aplicar --refazer`, `config`, `restaurar`) segue normal, e
+`aplicar --simular` só avisa.
+
+Para trocar de uma vez: `python3 -m d3bian_init_oasis_xfce aplicar --trocar`, ou,
+no painel, o botão **Voltar o … e instalar este** (pede confirmação). A troca roda o
+`restaurar --sim` do outro tema pelo próprio projeto dele (os pacotes dele ficam)
+e só instala este se o outro voltar sem erro. O projeto do outro é procurado na
+mesma pasta deste (clonados lado a lado) e depois onde o Python o acharia; se não
+achar, a troca para e mostra o comando para rodar à mão.
+
 ## Voltar ao que era antes
 
 Em Ajustes, **Voltar ao que era antes**, ou `restaurar --sim`. Os painéis voltam
