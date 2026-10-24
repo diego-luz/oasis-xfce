@@ -128,9 +128,12 @@ def arrastaria(pacotes: list[str]) -> list[str]:
 # o apt escreve o progresso em linhas "dlstatus:" e "pmstatus:" na saida; a
 # pagina tira dali a barra e o pacote da vez e esconde essas linhas do log
 PROGRESSO_APT = ["-o", "APT::Status-Fd=1"]
-# arquivo de configuracao mexido pelo usuario: fica o dele, sem perguntar
+# arquivo de configuracao mexido pelo usuario: fica o dele, sem perguntar.
+# Outro apt rodando (a pessoa instalando algo, a atualizacao automatica)
+# segura a trava do dpkg: espera ate 2 min em vez de falhar na hora
 APT_SEM_PERGUNTAS = ["-o", "Dpkg::Options::=--force-confdef",
-                     "-o", "Dpkg::Options::=--force-confold"]
+                     "-o", "Dpkg::Options::=--force-confold",
+                     "-o", "DPkg::Lock::Timeout=120"]
 # o sudo limpa o ambiente: o DEBIAN_FRONTEND precisa ir por dentro
 COMO_ROOT = ["sudo", "-n", "env", "DEBIAN_FRONTEND=noninteractive"]
 

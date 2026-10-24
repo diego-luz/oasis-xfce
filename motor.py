@@ -74,9 +74,12 @@ def condicao_atende(expressao: str, ctx: dict[str, str]) -> bool:
 # motor
 # --------------------------------------------------------------------------
 
-# arquivo de configuracao mexido pelo usuario: fica o dele, sem perguntar
+# arquivo de configuracao mexido pelo usuario: fica o dele, sem perguntar.
+# Outro apt rodando (a pessoa instalando algo, a atualizacao automatica)
+# segura a trava do dpkg: espera ate 2 min em vez de falhar na hora
 APT_SEM_PERGUNTAS = ["-o", "Dpkg::Options::=--force-confdef",
-                     "-o", "Dpkg::Options::=--force-confold"]
+                     "-o", "Dpkg::Options::=--force-confold",
+                     "-o", "DPkg::Lock::Timeout=120"]
 
 # ref de git com 40 hexadecimais e um commit fixo (ver passo_git)
 _COMMIT = re.compile(r"[0-9a-f]{40}")
