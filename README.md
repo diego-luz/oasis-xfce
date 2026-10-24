@@ -28,6 +28,33 @@ python3 -m d3bian_init_oasis_xfce        # pede a senha uma vez e abre o painel
   <img src="docs/imagens/resultado-instalado.jpg" alt="Depois de instalar, com as opções padrão: barra fina em cima e três ilhas embaixo" width="820">
 </div>
 
+<details>
+<summary><b>In English</b></summary>
+
+A local control panel, opened in your browser, that turns the Xfce 4.20 desktop
+of **Debian 13 (trixie)** into a soft, warm island layout **inspired by DESERT OS
+Linux**: a thin top bar, three floating translucent docks at the bottom, blur and
+rounded corners with picom, an app grid and search with rofi, and a dune
+wallpaper drawn on the fly. Panels hide when a window is maximized and come back
+when the mouse touches the edge.
+
+- **Official Debian packages only**: Orchis, Papirus, Breeze, Inter, picom, rofi,
+  docklike. No PPAs, Flatpak, Snap, `curl | sh` or third-party repositories.
+- **Python standard library only**: no pip, nothing to build.
+- **Safe to try**: every change is backed up and journaled; *Restore* puts your
+  desktop back the way it was.
+- **`desert-inspired` profile**: the closest look to DESERT OS that Debian 13
+  allows (`perfil diagnosticar`, `perfil simular`, `perfil aplicar --sim`).
+
+```sh
+git clone https://github.com/diego-luz/oasis-xfce.git d3bian_init_oasis_xfce
+python3 -m d3bian_init_oasis_xfce        # asks for your password once, opens the panel
+```
+
+The interface and the documentation are in Brazilian Portuguese.
+
+</details>
+
 ---
 
 ## O que ele faz
