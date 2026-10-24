@@ -3,7 +3,7 @@ id = "30"
 nome = "paineis"
 titulo = "Paineis em ilhas (ou barra unica)"
 requer = ["10"]
-afetada_por = ["paineis", "barra_lado", "clima", "menu_global", "logo", "modo", "destaque", "fonte"]
+afetada_por = ["paineis", "barra_lado", "clima", "menu_global", "logo", "modo", "destaque", "fonte", "estilo"]
 
 # Os paineis vao num perfil do xfce4-panel-profiles (paineis.py) e entram com
 # "xfce4-panel-profiles load", que passa pelo xfconfd e reinicia o painel.
@@ -88,7 +88,7 @@ conteudo = '''
   color: @@painel_texto@@;
 }
 .xfce4-panel.background button {
-  border-radius: 10px;
+  border-radius: @@painel_botao_raio@@px;
   padding-left: 6px;
   padding-right: 6px;
 }

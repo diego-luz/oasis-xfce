@@ -57,6 +57,27 @@ FUNDO_ILHA = {"escuro": "0.11 0.09 0.08 0.72", "claro": "0.98 0.96 0.93 0.74"}
 FUNDO_BARRA = {"escuro": "0.08 0.07 0.06 0.62", "claro": "0.98 0.97 0.95 0.70"}
 TEXTO_PAINEL = {"escuro": "#f2ece4", "claro": "#2a2420"}
 
+# botoes da janela: no xfwm4 (C fecha, H minimiza, M maximiza; | e o titulo) e
+# nos apps GTK que desenham a propria barra. O DESERT OS usa CHM| e
+# close,minimize,maximize: (xfwm4 e xsettings da instalacao de referencia)
+BOTOES = {"direita": ("|HMC", ""), "esquerda": ("CHM|", "close,minimize,maximize:")}
+
+# estilo dos efeitos e das ilhas. "oasis" e o de sempre deste projeto;
+# "desert" vem do picom.conf do pacote desert-settings 5.5 (desert.conf) e do
+# tema DESERT-Dark: janelas com raio 25, a barra de cima com 14 e os paineis
+# soltos redondos de ponta a ponta, sombra larga, desfoque mais forte e paineis
+# pretos a 30% (rgba(0, 0, 0, 0.3) no .xfce4-panel.background do tema)
+ESTILOS = {
+    "oasis": {"raio_janela": RAIO, "sombra_raio": 18, "sombra_opacidade": "0.32",
+              "sombra_x": -16, "sombra_y": -12, "desfoque_forca": 5,
+              "esmaecer_passo": "0.06", "esmaecer_delta": 5, "botao_raio": 10},
+    "desert": {"raio_janela": 25, "sombra_raio": 28, "sombra_opacidade": "0.75",
+               "sombra_x": -28, "sombra_y": -22, "desfoque_forca": 10,
+               "esmaecer_passo": "0.01", "esmaecer_delta": 1, "botao_raio": 25},
+}
+# os paineis do DESERT sao pretos a 30%; no claro fica o fundo do oasis
+FUNDO_DESERT = "0.0 0.0 0.0 0.30"
+
 # cores da grade e da busca (rofi), em #rrggbbaa
 ROFI = {
     #           fundo        fundo2       texto        fraco        borda
@@ -208,11 +229,49 @@ def _picom(cfg: dict[str, str]) -> dict[str, str]:
         "];",
     ]) if desfoque else "# janelas opacas: a transparencia so vale junto com o desfoque"
     # a barra unica encosta na borda e fica reta; as ilhas sao arredondadas
-    excluir_barra = ('  "window_type = \'dock\'",'
-                     if cfg.get("paineis", "ilhas") == "barra_unica" else "")
+    ilhas = cfg.get("paineis", "ilhas") != "barra_unica"
+    excluir_barra = "" if ilhas else '  "window_type = \'dock\'",'
+    estilo = ESTILOS.get(cfg.get("estilo", ""), ESTILOS["oasis"])
+    desert = estilo is ESTILOS["desert"]
+    if desert and ilhas:
+        # como no desert.conf: a barra de cima com raio menor e as ilhas
+        # redondas de ponta a ponta (metade da altura de 48 px). O y separa a
+        # barra (perto do topo) das ilhas
+        linhas_raio = "\n".join([
+            "corner-radius-rules = [",
+            f"  \"{RAIO}:window_type = 'dock' && y < 100\",",
+            "  \"24:window_type = 'dock' && y >= 100\"",
+            "];",
+        ])
+    else:
+        linhas_raio = "# o mesmo raio para tudo"
+    # a animacao de abrir do desert.conf; no modo leve (xrender) fica de fora
+    linhas_animacao = "\n".join([
+        "animations = (",
+        "  {",
+        '    triggers = [ "open", "show" ];',
+        '    preset = "appear";',
+        "    duration = 0.1;",
+        "  }",
+        ");",
+    ]) if desert and not software else "# sem animacoes"
+    # o esmaecer de 1 ms do desert redesenha demais no xrender; ali vale o do oasis
+    esmaecer = ESTILOS["oasis"] if desert and software else estilo
+    if desfoque:
+        linhas_desfoque = linhas_desfoque.replace(
+            "blur-strength = 5;", f"blur-strength = {estilo['desfoque_forca']};")
     return {
         "picom_backend": "xrender" if software else "glx",
         "picom_vsync": "false" if software else "true",
+        "picom_raio": str(estilo["raio_janela"]),
+        "picom_regras_raio": linhas_raio,
+        "picom_sombra_raio": str(estilo["sombra_raio"]),
+        "picom_sombra_opacidade": estilo["sombra_opacidade"],
+        "picom_sombra_x": str(estilo["sombra_x"]),
+        "picom_sombra_y": str(estilo["sombra_y"]),
+        "picom_esmaecer_passo": esmaecer["esmaecer_passo"],
+        "picom_esmaecer_delta": str(esmaecer["esmaecer_delta"]),
+        "picom_animacoes": linhas_animacao,
         "picom_desfoque": linhas_desfoque,
         "picom_opacidade": linhas_opacidade,
         "picom_excluir_barra": excluir_barra,
@@ -244,6 +303,9 @@ def contexto(cfg: dict[str, str]) -> dict[str, str]:
         logo_arquivo = f"d3bian-oasis-{variante}.svg"
         logo_origem = caminhos.ARQUIVOS / "logos" / f"{variante}.svg"
     logo = str(ICONES_DIR / logo_arquivo)
+    tamanho = cfg.get("fonte_tamanho", "10") if cfg.get("fonte_tamanho") in ("10", "11", "12") else "10"
+    botoes_xfwm, botoes_gtk = BOTOES.get(cfg.get("botoes_janela", ""), BOTOES["direita"])
+    desert = cfg.get("estilo") == "desert"
     ctx = {
         "gtk_tema": TEMA[modo],
         "gtk_esquema": "prefer-dark" if escuro else "default",
@@ -254,17 +316,23 @@ def contexto(cfg: dict[str, str]) -> dict[str, str]:
         "cursor_tamanho": "24",
         # sem fonte escolhida, as receitas pulam o passo com se = "fonte != sistema"
         "fonte_ui": fonte or "Sans",
-        "fonte_titulo": f"{fonte or 'Sans'} Bold 10",
+        "fonte_tamanho": tamanho,
+        "fonte_titulo": f"{fonte or 'Sans'} Bold {tamanho}",
+        "botoes_xfwm": botoes_xfwm,
+        # vazio: o projeto nao mexe no /Gtk/DecorationLayout (receita 20)
+        "botoes_gtk": botoes_gtk,
+        "botoes_gtk_esquerda": BOTOES["esquerda"][1],
         "fonte_mono": FONTE_MONO,
         "destaque_cor": destaque,
         "destaque_texto": _texto_sobre(destaque),
         "destaque_adwaita": DESTAQUE_ADWAITA.get(cfg.get("destaque", ""), "yellow"),
         "destaque_suave": f"rgba({dr}, {dg}, {db}, 0.22)",
         "raio": str(RAIO),
-        "painel_fundo_ilha": FUNDO_ILHA[modo],
-        "painel_fundo_barra": FUNDO_BARRA[modo],
+        "painel_fundo_ilha": FUNDO_DESERT if desert and escuro else FUNDO_ILHA[modo],
+        "painel_fundo_barra": FUNDO_DESERT if desert and escuro else FUNDO_BARRA[modo],
         "painel_texto": TEXTO_PAINEL[modo],
         "painel_hover": "rgba(255, 255, 255, 0.10)" if escuro else "rgba(0, 0, 0, 0.07)",
+        "painel_botao_raio": str(ESTILOS["desert" if desert else "oasis"]["botao_raio"]),
         "favoritos": ";".join(FAVORITOS),
         "logo_menu": logo,
         "logo_origem": str(logo_origem),

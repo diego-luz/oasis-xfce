@@ -1,0 +1,181 @@
+# Perfis visuais: um conjunto de opcoes (as mesmas do opcoes.toml) aplicado de
+# uma vez pelo motor de sempre, com a lista dos componentes que ele usa.
+#
+# O perfil nao tem receita propria: grava as opcoes e roda as receitas que elas
+# afetam, com o mesmo diario, as mesmas copias de seguranca e o mesmo "voltar
+# ao que era antes". Opcao que o perfil nao cita fica como a pessoa deixou.
+#
+# Cada componente diz de onde veio a ideia (evidencia):
+#   confirmado  lido nos arquivos do DESERT OS (pacote publico ou instalacao de referencia)
+#   inferido    deduzido da interface ou da documentacao
+#   criado      deste projeto, sem par no DESERT OS
+# e, se for opcional, quais opcoes o desligam (perfil desativar).
+# As fontes de cada evidencia estao em docs/desert-os.md.
+
+[[perfil]]
+nome = "desert-inspired"
+titulo = "Inspirado no DESERT OS"
+descricao = "Escuro, fonte Inter 12, botoes a esquerda, barra fina em cima e tres ilhas embaixo, picom com os numeros do DESERT OS e dunas no fundo; tudo do repositorio do Debian"
+# os.release ID e VERSION_ID aceitos; o resto (Ubuntu, o proprio DESERT OS,
+# Debian testing) e recusado antes de qualquer pacote
+sistemas = { debian = ["13"] }
+
+[perfil.valores]
+modo = "escuro"
+destaque = "areia"
+fonte = "inter"
+fonte_tamanho = "12"
+cursor = "breeze"
+paineis = "ilhas"
+clima = "sim"
+menu_global = "sim"
+logo = "oasis"
+paineis_maximizada = "esconder"
+efeitos = "desfoque"
+estilo = "desert"
+janelas = "sim"
+botoes_janela = "esquerda"
+papel = "dunas"
+cor_papel = "deserto"
+icones_area = "nenhum"
+
+# ---- componentes ----------------------------------------------------------
+
+[[perfil.componente]]
+id = "tema"
+titulo = "Tema GTK e da janela, escuro"
+receitas = ["20"]
+pacotes = ["orchis-gtk-theme", "libglib2.0-bin"]
+evidencia = "confirmado"
+desert = "DESERT-Dark (GTK 2, 3, 4 e xfwm4), tema proprio sem repositorio publico"
+aqui = "Orchis-Dark do Debian, com a cor de destaque por cima"
+
+[[perfil.componente]]
+id = "icones"
+titulo = "Icones e cursor"
+receitas = ["20"]
+pacotes = ["papirus-icon-theme", "breeze-cursor-theme", "librsvg2-common"]
+evidencia = "confirmado"
+desert = "icones DESERT-Dark e cursor DESERT (16 px), proprios, sem repositorio publico"
+aqui = "Papirus-Dark e Breeze (24 px)"
+
+[[perfil.componente]]
+id = "fonte"
+titulo = "Fonte da interface, 12 pt"
+receitas = ["20"]
+pacotes = ["fonts-inter", "fonts-jetbrains-mono"]
+evidencia = "confirmado"
+desert = "fonte DESERT 12 (os metadados dizem fabricante RSMS, o da Inter, licenca SIL OFL)"
+aqui = "Inter 12 (fonts-inter) e JetBrains Mono no texto monoespacado"
+
+[[perfil.componente]]
+id = "botoes"
+titulo = "Botoes da janela a esquerda, titulo no centro"
+receitas = ["20"]
+pacotes = []
+evidencia = "confirmado"
+desert = "xfwm4 button_layout CHM|, title_alignment center; xsettings DecorationLayout close,minimize,maximize:"
+aqui = "os mesmos valores"
+opcional = true
+liga_se = "botoes_janela == esquerda"
+desligar = { botoes_janela = "direita" }
+
+[[perfil.componente]]
+id = "paineis"
+titulo = "Barra fina em cima e tres ilhas embaixo"
+receitas = ["30"]
+pacotes = ["xfce4-panel-profiles", "python3-gi", "xfce4-whiskermenu-plugin", "xfce4-docklike-plugin",
+           "xfce4-pulseaudio-plugin", "xfce4-notifyd", "xfce4-power-manager-plugins"]
+plugins = ["whiskermenu", "docklike", "pulseaudio", "systray", "notification-plugin"]
+evidencia = "confirmado"
+desert = "painel 1 em cima (menu, botoes da janela, menu global, teclado, energia, bandeja, som, indicadores, central de controle); embaixo tres paineis de 64 px: lancador e clima, docklike, relogio e aplicativos"
+aqui = "barra solta de 30 px (Whisker, menu global, bandeja, avisos, som, energia) e ilhas de 48 px: grade e clima, docklike, relogio e busca"
+
+[[perfil.componente]]
+id = "clima"
+titulo = "Previsao do tempo na ilha da esquerda"
+receitas = ["10", "30"]
+pacotes = ["xfce4-weather-plugin"]
+plugins = ["weather"]
+evidencia = "confirmado"
+desert = "plugin proprio desert-weather"
+aqui = "xfce4-weather-plugin do Debian"
+opcional = true
+liga_se = "clima == sim"
+desligar = { clima = "nao" }
+
+[[perfil.componente]]
+id = "menu_global"
+titulo = "Menu do programa na barra de cima"
+receitas = ["10", "30", "32"]
+pacotes = ["xfce4-appmenu-plugin", "appmenu-gtk3-module", "appmenu-registrar", "vala-panel-appmenu-common"]
+plugins = ["appmenu"]
+evidencia = "confirmado"
+desert = "plugin proprio desert-global-menu"
+aqui = "xfce4-appmenu-plugin (vala-panel-appmenu); os menus aparecem depois de entrar de novo na sessao"
+opcional = true
+liga_se = "menu_global == sim"
+desligar = { menu_global = "nao" }
+
+[[perfil.componente]]
+id = "esconder"
+titulo = "Paineis saem da frente da janela maximizada"
+receitas = ["31"]
+pacotes = ["gir1.2-wnck-3.0", "python3-gi"]
+evidencia = "confirmado"
+desert = "autohide-behavior = 1 (esconder com inteligencia) nos tres paineis de baixo"
+aqui = "d3bian-foco: esconde com a janela maximizada ou por cima da barra"
+opcional = true
+liga_se = "paineis_maximizada == esconder"
+desligar = { paineis_maximizada = "manter" }
+
+[[perfil.componente]]
+id = "compositor"
+titulo = "picom: desfoque, sombras, cantos e animacao de abrir"
+receitas = ["10", "50"]
+pacotes = ["picom", "mesa-utils", "x11-utils"]
+evidencia = "confirmado"
+desert = "picom com /usr/local/bin/desert.conf (glx, dual_kawase forca 10, cantos 25, barra 14, paineis soltos 32, sombra 28); em maquina virtual o DESERT desliga o picom e usa o xfwm4"
+aqui = "picom 12.5 do Debian com estilo desert; sem aceleracao de video, xrender sem desfoque"
+opcional = true
+liga_se = "efeitos != desligado"
+desligar = { efeitos = "desligado" }
+
+[[perfil.componente]]
+id = "encaixe"
+titulo = "Encaixe de janelas e layouts"
+receitas = ["35"]
+pacotes = ["wmctrl", "xdotool", "x11-utils", "python3-gi", "gir1.2-gtk-3.0"]
+evidencia = "inferido"
+desert = "desert-snap-layouts e o cortile (lado a lado), binarios proprios"
+aqui = "encaixe do proprio xfwm4 e d3bian-janelas/d3bian-layouts (Super e setas, Super+Z)"
+opcional = true
+liga_se = "janelas == sim"
+desligar = { janelas = "nao" }
+
+[[perfil.componente]]
+id = "grade"
+titulo = "Grade de aplicativos e busca"
+receitas = ["45"]
+pacotes = ["rofi"]
+evidencia = "inferido"
+desert = "lancador do xfdashboard e desert-search (o xfdashboard nao existe no Debian 13)"
+aqui = "rofi com tema proprio (Super+A e Super+Espaco)"
+
+[[perfil.componente]]
+id = "papel"
+titulo = "Papel de parede de dunas"
+receitas = ["40"]
+pacotes = ["librsvg2-bin"]
+evidencia = "inferido"
+desert = "DESERT-default.jpg, video no fundo (xwinwrap) e cor de destaque tirada do papel"
+aqui = "dunas desenhadas na hora, paleta deserto; o video e a cor automatica nao entram"
+
+[[perfil.componente]]
+id = "terminal"
+titulo = "Terminal translucido"
+receitas = ["37"]
+pacotes = []
+evidencia = "criado"
+desert = "sem par conhecido"
+aqui = "xfce4-terminal com One Dark e fundo translucido (opcao terminal, fora do perfil)"

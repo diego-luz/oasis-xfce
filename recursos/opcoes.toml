@@ -31,6 +31,15 @@ ajuda = "Inter vem do repositorio, com JetBrains Mono para o texto monoespacado"
 grupo = "Visual"
 nomes = { inter = "Inter", sistema = "Manter a atual" }
 
+
+[[opcao]]
+chave = "fonte_tamanho"
+padrao = "10"
+valores = ["10", "11", "12"]
+titulo = "Tamanho da fonte"
+ajuda = "Da interface e do titulo das janelas; o DESERT OS usa 12"
+grupo = "Visual"
+nomes = { "10" = "10 (padrao)", "11" = "11", "12" = "12, como no DESERT OS" }
 [[opcao]]
 chave = "cursor"
 padrao = "breeze"
@@ -101,6 +110,15 @@ ajuda = "Sem aceleracao de video (VM sem 3D) o picom roda leve, sem desfoque, me
 grupo = "Efeitos"
 nomes = { desfoque = "Desfoque e sombras", sombras = "So sombras", desligado = "Desligados" }
 
+
+[[opcao]]
+chave = "estilo"
+padrao = "oasis"
+valores = ["oasis", "desert"]
+titulo = "Estilo das ilhas e dos efeitos"
+ajuda = "Desert: os numeros do picom do DESERT OS (cantos de 25, ilhas redondas de ponta a ponta, sombra larga, desfoque mais forte) e paineis pretos a 30% no modo escuro"
+grupo = "Efeitos"
+nomes = { oasis = "Oasis", desert = "Como no DESERT OS" }
 [[opcao]]
 chave = "janelas"
 padrao = "sim"
@@ -109,6 +127,15 @@ titulo = "Encaixe e bordas de janela"
 ajuda = "Super e setas para metades, Super+1 a 4 para quartos, layouts no Super+Z e bordas mais largas. Alt + arrastar move a janela e Alt + botao direito arrastado redimensiona, de qualquer ponto dela"
 grupo = "Janelas"
 
+
+[[opcao]]
+chave = "botoes_janela"
+padrao = "direita"
+valores = ["direita", "esquerda"]
+titulo = "Botoes da janela"
+ajuda = "Fechar, minimizar e maximizar. A esquerda, como no DESERT OS e no macOS; vale tambem para os apps GTK que desenham a propria barra"
+grupo = "Janelas"
+nomes = { direita = "A direita", esquerda = "A esquerda" }
 [[opcao]]
 chave = "papel"
 padrao = "dunas"

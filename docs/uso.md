@@ -32,6 +32,7 @@ oficial do Debian, mostrando só o que serve para o hardware encontrado.
 | `modo` | escuro, claro |
 | `destaque` (cor de destaque) | areia, terracota, oásis, azul do Orchis |
 | `fonte` | Inter (com JetBrains Mono), a do sistema |
+| `fonte_tamanho` | 10, 11, 12 (o do DESERT OS) |
 | `cursor` | Breeze escuro, Breeze claro |
 | `paineis` | em ilhas, barra única |
 | `barra_lado` (só na barra única) | embaixo, no topo |
@@ -39,10 +40,65 @@ oficial do Debian, mostrando só o que serve para o hardware encontrado.
 | `menu_global` (menu do programa na barra de cima) | não, sim |
 | `logo` (ícone do menu) | sol e duna, logo do Debian |
 | `efeitos` (picom) | desfoque e sombras, só sombras, desligados |
+| `estilo` (ilhas e efeitos) | oásis, como no DESERT OS |
 | `janelas` (encaixe e bordas) | sim, não |
+| `botoes_janela` | à direita, à esquerda (como no DESERT OS) |
 | `papel` | dunas, degradê, manter o atual |
 | `cor_papel` | deserto, oásis, crepúsculo, noite |
 | `icones_area` | nenhum, só removíveis, tudo |
+
+## Perfil desert-inspired
+
+Um conjunto de opções que deixa a área de trabalho o mais perto possível do
+DESERT OS com o que o Debian 13 tem: escuro, Inter 12, botões das janelas à
+esquerda, ilhas, menu global e o picom com os números do DESERT OS (`estilo =
+desert`). Ele não tem receita própria. Grava essas opções e roda as receitas que
+elas afetam, com as mesmas cópias de segurança e o mesmo diário. As opções que
+o perfil não cita (terminal, tela de login, fundo do login) ficam como estão.
+O que veio do DESERT OS e o que foi criado aqui está em [desert-os.md](desert-os.md).
+
+```sh
+python3 -m d3bian_init_oasis_xfce perfil diagnosticar   # sistema, pacotes e origem, compositor, plugins
+python3 -m d3bian_init_oasis_xfce perfil componentes    # o que entra, e de onde veio cada parte
+python3 -m d3bian_init_oasis_xfce perfil simular        # o plano e cada passo, sem mexer em nada
+python3 -m d3bian_init_oasis_xfce perfil aplicar        # mostra o plano e pede --sim
+python3 -m d3bian_init_oasis_xfce perfil aplicar --sim
+python3 -m d3bian_init_oasis_xfce perfil estado         # opções em uso, componentes ligados, compositor
+python3 -m d3bian_init_oasis_xfce perfil desativar --sim   # desliga picom, menu global, clima, esconder, encaixe e botões à esquerda
+python3 -m d3bian_init_oasis_xfce perfil logs --erros
+python3 -m d3bian_init_oasis_xfce perfil restaurar --sim   # o mesmo "voltar ao que era antes"
+```
+
+`estado`, `diagnosticar`, `componentes` e `logs` só leem: não instalam nada,
+não gravam opção, não escrevem no registro e nem criam a pasta do projeto.
+
+Antes de mexer, o `aplicar` confere:
+
+- **o sistema**: `ID=debian` e `VERSION_ID=13` no `/etc/os-release`. Ubuntu,
+  Debian testing e o próprio DESERT OS (que diz `debian` no `ID_LIKE`) são
+  recusados;
+- **a origem de cada pacote que falta**: o candidato do `apt-cache policy` tem de
+  vir de um índice com `o=Debian` e de um arquivo estável (nada de backports,
+  proposed-updates, testing ou unstable). Pacote vindo de outra fonte impede o
+  aplicar. Pacote que o repositório não tem só avisa: aquele componente fica de
+  fora e o resto entra;
+- **as fontes do apt**: as que não são do Debian estável aparecem, mas o perfil
+  nunca mexe no `/etc/apt`;
+- **o compositor**: um picom, compton ou xcompmgr de fora aparece. Ele fica
+  rodando, e o picom do projeto só inicia sem ele.
+
+Aplicar de novo, sem opção alterada, não roda nada ("nada a fazer"). Com
+`--refazer`, roda de novo as receitas do perfil. A instalação do zero (máquina
+ainda não preparada) passa pelas mesmas verificações do `instalar`, com uma
+diferença: a tela de login, que grava em `/etc` e `/usr/share`, fica desligada
+(`login = nao`) se você ainda não tinha gravado nenhuma opção. Para ligar
+depois: `config login=sim`.
+
+**O que o `desativar` desfaz e o que não desfaz.** Ele grava `efeitos =
+desligado`, `menu_global = nao`, `clima = nao`, `paineis_maximizada = manter`,
+`janelas = nao` e `botoes_janela = direita`, cada um com o caminho de volta que
+a receita já tinha. Os pacotes ficam. O tema, a fonte e os painéis em ilhas não
+são "opcionais": para eles, use `restaurar`.
 
 ## Atalhos
 
@@ -118,8 +174,8 @@ que você mesmo abriu, com outra configuração, nunca é fechado pelo projeto.
 
 ## Sistemas
 
-Debian 13 (a verificação aceita `debian` no `ID` ou no `ID_LIKE` do
-`/etc/os-release`), numa sessão gráfica do Xfce 4.20 com o `xfconf-query`. Tudo
+Debian 13 (a verificação geral aceita `debian` no `ID` ou no `ID_LIKE` do
+`/etc/os-release`; o `perfil` é mais estrito e exige `ID=debian` e `VERSION_ID=13`), numa sessão gráfica do Xfce 4.20 com o `xfconf-query`. Tudo
 vem do repositório: nada é baixado de fora, clonado ou compilado. O
 `rsvg-convert` (do `librsvg2-bin`) desenha o papel de parede e chega com a
 instalação.

@@ -3,8 +3,9 @@ id = "50"
 nome = "efeitos"
 titulo = "Desfoque, sombras e cantos (picom)"
 requer = ["10"]
-# o raio e o que fica de fora do arredondamento dependem dos paineis
-afetada_por = ["efeitos", "paineis"]
+# o raio e o que fica de fora do arredondamento dependem dos paineis; o
+# estilo traz os numeros do picom (oasis ou os do DESERT OS)
+afetada_por = ["efeitos", "paineis", "estilo"]
 
 # Com o picom ligado, o compositor do xfwm4 fica desligado (os dois juntos
 # brigam pela tela). Sem aceleracao de video (VM sem 3D, llvmpipe) o picom.conf

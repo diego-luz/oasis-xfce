@@ -4,7 +4,7 @@ nome = "paineis-maximizada"
 titulo = "Paineis escondidos com a janela maximizada"
 requer = ["30"]
 # o 30 recarrega os paineis e para o d3bian-foco; daqui ele volta
-afetada_por = ["paineis_maximizada", "paineis", "barra_lado", "clima", "menu_global", "logo", "modo", "destaque", "fonte"]
+afetada_por = ["paineis_maximizada", "paineis", "barra_lado", "clima", "menu_global", "logo", "modo", "destaque", "fonte", "estilo"]
 
 # O d3bian-foco acompanha a janela ativa: maximizada, ele encosta os paineis na
 # borda, zera as margens do xfwm4 e manda esconder; passando por cima de uma

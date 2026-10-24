@@ -189,6 +189,140 @@ def cmd_restaurar(args) -> int:
     return 1 if falhas else 0
 
 
+# ---- perfil visual ------------------------------------------------------------
+
+# so leem: nao gravam opcao, registro nem pasta do projeto
+PERFIL_SO_LEITURA = {"estado", "diagnosticar", "componentes", "logs"}
+
+
+def _checagens(lista: list[dict]) -> None:
+    for c in lista:
+        marca = "ok " if c["ok"] else ("!! " if c["critico"] else " ~ ")
+        print(f"  {marca} {c['nome']:<30}{c['detalhe']}")
+
+
+def _plano(p: dict) -> None:
+    if p["completa"]:
+        print("  maquina ainda nao preparada: roda a instalacao inteira")
+    for chave, antes, depois in p["opcoes"]:
+        print(f"    {chave:<20}{antes or '-':<12}-> {depois}")
+    if not p["opcoes"]:
+        print("    nenhuma opcao muda")
+    print("  receitas: " + (", ".join(p["receitas"]) or "nenhuma"))
+
+
+def cmd_perfil(args) -> int:
+    from . import perfil
+    try:
+        alvo = perfil.obter(args.nome)
+    except (KeyError, ValueError, OSError) as erro:
+        print(f"  {erro}")
+        return 1
+    acao = args.acao
+
+    if acao == "componentes":
+        print(f"  {alvo.nome}: {alvo.titulo}\n  {alvo.descricao}\n")
+        for c in alvo.componentes:
+            extra = " (opcional)" if c.opcional else ""
+            print(f"  [{c.evidencia}] {c.ident}{extra}: {c.titulo}")
+            print(f"      DESERT OS: {c.desert}")
+            print(f"      aqui:      {c.aqui}")
+            if c.pacotes:
+                print(f"      pacotes:   {', '.join(c.pacotes)}")
+        return 0
+
+    if acao == "logs":
+        linhas = perfil.registro(args.linhas, so_erros=args.erros)
+        print("\n".join(linhas) if linhas else f"  nada em {caminhos.REGISTRO}")
+        return 0
+
+    if acao == "estado":
+        ok, detalhe = perfil.compativel(alvo)
+        print(f"  perfil {alvo.nome}: {alvo.titulo}")
+        print(f"  sistema: {detalhe}" + ("" if ok else "  (incompativel)"))
+        lista = receitas.carregar()
+        pendentes = receitas.desatualizadas(lista)
+        print(f"  receitas: {sum(r.aplicada for r in lista)} de {len(lista)} aplicadas"
+              + (f"; pendentes {', '.join(sorted(pendentes))}" if pendentes else ""))
+        difere = perfil.em_uso(alvo)
+        if not difere:
+            print("  opcoes: todas como o perfil pede")
+        for chave, quer, tem in difere:
+            print(f"    {chave:<20}{tem or '-':<12}(o perfil usa {quer})")
+        cfg = config.ler()
+        for c in alvo.componentes:
+            if c.opcional:
+                print(f"    {'ligado ' if c.ligado(cfg) else 'desligado'} {c.ident}")
+        rodando = perfil.compositores()
+        print("  compositor: " + (", ".join(f"{c['nome']}{'' if c['do_projeto'] else ' (de fora)'}"
+                                             for c in rodando)
+                                  or f"nenhum picom; xfwm4 use_compositing = {perfil.compositor_xfwm4() or '?'}"))
+        aplicado = receitas.instalado(lista) and not difere
+        print(f"\n  em uso: {'sim' if aplicado else 'nao'}")
+        return 0
+
+    if acao == "diagnosticar":
+        lista = perfil.diagnostico(alvo)
+        _checagens(lista)
+        impedem = perfil.impedimentos(lista)
+        print("\n  " + ("compativel: pode aplicar" if not impedem
+                        else "impedimentos: " + ", ".join(impedem)))
+        return 1 if impedem else 0
+
+    if acao == "restaurar":
+        # o mesmo voltar ao que era antes do projeto, com a mesma confirmacao
+        return cmd_restaurar(args)
+
+    # simular, aplicar, desativar
+    valores = alvo.valores if acao in ("simular", "aplicar") else perfil.a_desligar(alvo)
+    if acao == "desativar":
+        # sem nada aplicado, o plano seria a instalacao inteira, so que desligada
+        if not receitas.instalado():
+            print("  nada deste projeto aplicado nesta conta; nao ha o que desativar")
+            return 0
+        if not valores:
+            print("  nenhum componente opcional ligado")
+            return 0
+        print("  desligando: " + ", ".join(f"{c}={v}" for c, v in valores.items()) + "\n")
+    simular = acao == "simular"
+    lista = perfil.diagnostico(alvo, cfg={**config.ler(), **valores})
+    _checagens(lista)
+    impedem = perfil.impedimentos(lista)
+    if impedem and not simular:
+        print("\n  impedimentos: " + ", ".join(impedem) + "; nada foi alterado")
+        return 1
+    if impedem:
+        print("\n  atencao: aplicar seria recusado aqui (" + ", ".join(impedem) + "); a simulacao segue")
+    print()
+    _plano(perfil.plano(valores, refazer=args.refazer))
+    print(f"  copias de seguranca em {caminhos.BACKUP}; o diario em {caminhos.ESTADO_DIR}")
+    if not simular and not args.sim:
+        print(f"\n  confirme com: {NOME} perfil {acao} --sim"
+              + ("" if args.nome == perfil.PADRAO else f" --nome {args.nome}"))
+        return 1
+    if not simular:
+        from . import familia
+        recusa = familia.recusa()
+        if recusa and not args.trocar:
+            print(f"  {recusa}")
+            return 1
+        garantir_sudo()
+        # maquina ainda nao preparada: as mesmas verificacoes do instalar
+        if not receitas.instalado():
+            impedem = sistema.impedimentos(sistema.verificacoes(usar_cache=False))
+            if impedem:
+                print("  verificacoes que impedem a instalacao: " + ", ".join(impedem))
+                return 1
+        if recusa and familia.trocar(print, terminal=True) != 0:
+            return 1
+    falhas = perfil.executar(valores, print, simular=simular, refazer=args.refazer)
+    if falhas:
+        print(f"\n  {falhas} etapa(s) com problema. Detalhes: {NOME} perfil logs --erros")
+        return 1
+    print("\n  " + ("simulado; nada foi alterado" if simular else "pronto"))
+    return 0
+
+
 # --------------------------------------------------------------------------
 
 def construir() -> argparse.ArgumentParser:
@@ -232,16 +366,35 @@ def construir() -> argparse.ArgumentParser:
                    help="remove tambem os pacotes que o projeto instalou e as pastas do projeto")
     r.set_defaults(func=cmd_restaurar)
 
+    pf = sub.add_parser("perfil", help="perfil visual desert-inspired: estado, diagnostico, aplicar, desativar")
+    pf.add_argument("acao", nargs="?", default="estado",
+                    choices=["estado", "diagnosticar", "componentes", "simular", "aplicar",
+                             "desativar", "restaurar", "logs"],
+                    help="estado (padrao), diagnosticar, componentes e logs so leem")
+    pf.add_argument("--nome", default="desert-inspired", help="o perfil, de recursos/perfis.toml")
+    pf.add_argument("--sim", action="store_true", help="confirma aplicar, desativar e restaurar")
+    pf.add_argument("--refazer", action="store_true",
+                    help="reaplica as receitas do perfil mesmo sem opcao alterada")
+    pf.add_argument("--trocar", action="store_true",
+                    help="com outro tema Xfce da familia instalado, volta ele antes (os pacotes ficam)")
+    pf.add_argument("--apagar", action="store_true",
+                    help="no restaurar, remove tambem os pacotes que o projeto instalou")
+    pf.add_argument("--linhas", type=int, default=40, help="nos logs, quantas linhas do fim")
+    pf.add_argument("--erros", action="store_true", help="nos logs, so erros e avisos")
+    pf.set_defaults(func=cmd_perfil)
+
     return p
 
 
 def main(argv: list[str] | None = None) -> int:
-    caminhos.preparar()
     caminhos.proteger_codigo()
     parser = construir()
     args = parser.parse_args(argv)
     if not getattr(args, "func", None):
         args = parser.parse_args(["web", *(argv or [])])
+    # o diagnostico do perfil nao cria nem a pasta do projeto
+    if not (args.func is cmd_perfil and args.acao in PERFIL_SO_LEITURA):
+        caminhos.preparar()
     try:
         return int(args.func(args) or 0)
     except KeyboardInterrupt:

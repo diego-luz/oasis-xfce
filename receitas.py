@@ -168,6 +168,8 @@ def _executar(apenas, pular, refazer, simular, diz, cfg) -> int:
             maquina.rodar(receita.passos)
         except motor.ErroDePasso as erro:
             diz(f"  ERRO: {erro}")
+            # a saida pode ser so a pagina; o registro guarda o erro para depois
+            estado.registrar(f"ERRO em {receita.ident}: {erro}")
             falhas += 1
             continue
         except Exception as erro:                      # nao derruba o resto

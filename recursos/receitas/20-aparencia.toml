@@ -3,7 +3,7 @@ id = "20"
 nome = "aparencia"
 titulo = "Tema, icones, cursor, fontes e cor de destaque"
 requer = ["10"]
-afetada_por = ["modo", "destaque", "fonte", "cursor"]
+afetada_por = ["modo", "destaque", "fonte", "fonte_tamanho", "cursor", "botoes_janela"]
 
 [[passo]]
 tipo = "xfconf"
@@ -37,7 +37,7 @@ tipo = "xfconf"
 se = "fonte != sistema"
 canal = "xsettings"
 chave = "/Gtk/FontName"
-valor = "@@fonte_ui@@ 10"
+valor = "@@fonte_ui@@ @@fonte_tamanho@@"
 
 [[passo]]
 tipo = "xfconf"
@@ -57,7 +57,8 @@ canal = "xsettings"
 chave = "/Xft/RGBA"
 valor = "rgb"
 
-# janela macia: titulo no centro e so os tres botoes da direita
+# janela macia: titulo no centro e so os tres botoes, a direita ou a esquerda
+# (botoes_janela; a esquerda e o CHM| do DESERT OS)
 [[passo]]
 tipo = "xfconf"
 dizer = "ajustando as janelas"
@@ -84,7 +85,45 @@ xfconf-query -c xfwm4 -p /general/theme -s "$novo"
 tipo = "xfconf"
 canal = "xfwm4"
 chave = "/general/button_layout"
-valor = "|HMC"
+valor = "@@botoes_xfwm@@"
+
+# os apps GTK que desenham a propria barra (CSD) seguem o /Gtk/DecorationLayout.
+# A esquerda grava close,minimize,maximize: (o do DESERT OS); a direita devolve
+# o valor de antes do projeto, que o diario guardou, ou tira a propriedade se
+# ela nao existia. Sem nada no diario, o projeto nunca mexeu nela
+[[passo]]
+tipo = "script"
+tolera_falha = true
+corpo = '''
+p=/Gtk/DecorationLayout
+if [ -n "$CTX_BOTOES_GTK" ]; then
+  d3_xfconf xsettings "$p" string
+  xfconf-query -c xsettings -p "$p" -n -t string -s "$CTX_BOTOES_GTK" 2>/dev/null \
+    || xfconf-query -c xsettings -p "$p" -s "$CTX_BOTOES_GTK"
+  echo "botoes a esquerda tambem nos apps GTK"
+  exit 0
+fi
+# so devolve o que o proprio projeto pos; um ajuste feito depois pela pessoa fica
+[ "$(xfconf-query -c xsettings -p "$p" 2>/dev/null || true)" = "$CTX_BOTOES_GTK_ESQUERDA" ] || exit 0
+antes=$(PYTHONPATH="$D3_DIARIO_PAI" "$D3_DIARIO_PYTHON" - <<'PY'
+import importlib, os
+d = importlib.import_module(os.environ["D3_DIARIO_PACOTE"] + ".diario")
+for i in d.ler():
+    if i.get("tipo") == "xfconf" and i.get("canal") == "xsettings" and i.get("chave") == "/Gtk/DecorationLayout":
+        # o primeiro e o de antes do projeto
+        print("existia " + (i.get("valor") or "").strip() if i.get("existia") else "nao")
+        break
+PY
+)
+case "$antes" in
+  "existia "*)
+    xfconf-query -c xsettings -p "$p" -s "${antes#existia }" 2>/dev/null || true
+    echo "botoes dos apps GTK como eram antes" ;;
+  nao)
+    xfconf-query -c xsettings -p "$p" -r 2>/dev/null || true
+    echo "botoes dos apps GTK no padrao do Xfce" ;;
+esac
+'''
 
 [[passo]]
 tipo = "xfconf"
@@ -135,7 +174,7 @@ gtk-theme-name=@@gtk_tema@@
 gtk-icon-theme-name=@@icones_tema@@
 gtk-cursor-theme-name=@@cursor_tema@@
 gtk-cursor-theme-size=@@cursor_tamanho@@
-gtk-font-name=@@fonte_ui@@ 10
+gtk-font-name=@@fonte_ui@@ @@fonte_tamanho@@
 gtk-application-prefer-dark-theme=@@gtk_escuro@@
 gtk-xft-antialias=1
 gtk-xft-hinting=1
@@ -170,7 +209,7 @@ conteudo = '''
 gtk-theme-name="@@gtk_tema@@"
 gtk-icon-theme-name="@@icones_tema@@"
 gtk-cursor-theme-name="@@cursor_tema@@"
-gtk-font-name="@@fonte_ui@@ 10"
+gtk-font-name="@@fonte_ui@@ @@fonte_tamanho@@"
 '''
 
 # o cursor da area de trabalho e dos programas que nao sao GTK

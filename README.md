@@ -51,6 +51,17 @@ python3 -m d3bian_init_oasis_xfce        # pede a senha uma vez e abre o painel
 - **Papel de parede** de dunas ou degradê, em quatro paletas, desenhado no tamanho
   da sua tela
 - **Programas úteis**: uma lista pronta do repositório oficial do Debian, conforme o hardware
+- **Perfil `desert-inspired`**: o mais perto do DESERT OS que o Debian 13 permite (Inter 12,
+  botões à esquerda, menu global, o picom com os números do DESERT OS), com diagnóstico
+  antes: recusa outro sistema e pacote que não venha do Debian estável
+  ([uso](docs/uso.md#perfil-desert-inspired), [o que veio do DESERT OS](docs/desert-os.md))
+
+```sh
+python3 -m d3bian_init_oasis_xfce perfil diagnosticar
+python3 -m d3bian_init_oasis_xfce perfil simular
+python3 -m d3bian_init_oasis_xfce perfil aplicar --sim
+python3 -m d3bian_init_oasis_xfce perfil restaurar --sim
+```
 
 <!-- imagens: gerado a partir do teste num Debian 13; refazer, nao editar a mao -->
 ## Telas
@@ -79,7 +90,8 @@ porque o contêiner não tem local configurado.
 | | |
 |---|---|
 | 🚀 [Usando](docs/uso.md) | rodar, opções, atalhos, o que fica onde, sistemas, voltar ao que era antes |
-| 🛠️ [Desenvolvimento](docs/desenvolvimento.md) | receitas, ilhas, picom, rofi e papel de parede por dentro |
+| 🏜️ [DESERT OS](docs/desert-os.md) | o que foi confirmado, inferido e criado aqui, componente por componente |
+| 🛠️ [Desenvolvimento](docs/desenvolvimento.md) | receitas, perfis, ilhas, picom, rofi, papel de parede e testes |
 | ⚙️ [Núcleo](docs/nucleo.md) | o motor, o servidor e as telas comuns a toda a família |
 
 ## Família d3bian-init
@@ -97,7 +109,8 @@ Os temas Xfce (🪟) são um por conta: com outro instalado, a instalação é r
 ## Créditos
 
 - Inspirado no visual do [DESERT OS Linux](https://sites.google.com/view/desertoslinux).
-  Nada dele é usado: nem nome, nem logo, nem imagem. Os papéis de parede, os ícones
+  Nada dele é usado: nem nome, nem logo, nem imagem, nem arquivo; do `picom.conf` e dos
+  ajustes do Xfce dele vêm só números e nomes de propriedade ([detalhes](docs/desert-os.md)). Os papéis de parede, os ícones
   do menu e da grade e os temas do rofi são desenhados aqui.
 - Tudo é instalado do repositório oficial do Debian, cada um com a sua licença:
   [Orchis](https://github.com/vinceliuice/Orchis-theme) (GPL-3.0),
