@@ -285,7 +285,7 @@ def cmd_perfil(args) -> int:
             return 0
         print("  desligando: " + ", ".join(f"{c}={v}" for c, v in valores.items()) + "\n")
     simular = acao == "simular"
-    lista = perfil.diagnostico(alvo, cfg={**config.ler(), **valores})
+    lista = perfil.diagnostico(alvo, cfg=perfil.plano(valores)["cfg"])
     _checagens(lista)
     impedem = perfil.impedimentos(lista)
     if impedem and not simular:

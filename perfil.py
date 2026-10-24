@@ -301,17 +301,18 @@ def diagnostico(perfil: Perfil, cfg: dict[str, str] | None = None) -> list[dict]
     recusa = familia.recusa()
     add("Outro tema da familia", not recusa, recusa or "nenhum aplicado nesta conta", critico=False)
 
-    cfg = {**config.ler(), **perfil.valores} if cfg is None else cfg
-    plano = pacotes_a_instalar(cfg)
-    add("Pacotes ja presentes", True, f"{len(plano['presentes'])} pacote(s)", critico=False)
+    # as mesmas opcoes do plano: numa instalacao nova ele desliga o login
+    cfg = plano(perfil.valores)["cfg"] if cfg is None else cfg
+    pacotes = pacotes_a_instalar(cfg)
+    add("Pacotes ja presentes", True, f"{len(pacotes['presentes'])} pacote(s)", critico=False)
     add("Pacotes do Debian a instalar", True,
-        ", ".join(plano["do_debian"]) or "nenhum", critico=False)
-    add("Pacotes de fora do Debian", not plano["fora_do_debian"],
+        ", ".join(pacotes["do_debian"]) or "nenhum", critico=False)
+    add("Pacotes de fora do Debian", not pacotes["fora_do_debian"],
         ("o candidato nao vem do Debian estavel, entao nada e instalado: "
-         + ", ".join(plano["fora_do_debian"])) if plano["fora_do_debian"] else "nenhum")
-    add("Pacotes indisponiveis", not plano["indisponiveis"],
+         + ", ".join(pacotes["fora_do_debian"])) if pacotes["fora_do_debian"] else "nenhum")
+    add("Pacotes indisponiveis", not pacotes["indisponiveis"],
         ("o repositorio nao tem (rode sudo apt update; sem eles o componente fica de fora): "
-         + ", ".join(plano["indisponiveis"])) if plano["indisponiveis"] else "nenhum",
+         + ", ".join(pacotes["indisponiveis"])) if pacotes["indisponiveis"] else "nenhum",
         critico=False)
 
     fora = fontes_de_fora()

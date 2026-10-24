@@ -36,7 +36,18 @@ def distribuicao() -> dict[str, str]:
 
 
 def desktop() -> str:
-    return os.environ.get("XDG_CURRENT_DESKTOP", "").strip()
+    """O XDG_CURRENT_DESKTOP; sem ele (pelo ssh, ou um terminal aberto fora da
+    sessao), XFCE se houver um xfce4-session desta conta rodando."""
+    ambiente = os.environ.get("XDG_CURRENT_DESKTOP", "").strip()
+    if ambiente:
+        return ambiente
+    for d in Path("/proc").glob("[0-9]*"):
+        try:
+            if d.stat().st_uid == os.getuid() and (d / "comm").read_text().strip() == "xfce4-session":
+                return "XFCE"
+        except OSError:
+            continue
+    return ""
 
 
 def sessao_grafica() -> bool:

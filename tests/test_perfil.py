@@ -190,6 +190,20 @@ class Diagnostico(unittest.TestCase):
         self.assertFalse(item["ok"])
         self.assertIn("compton", item["detalhe"])
 
+    def test_instalacao_nova_nao_conta_os_pacotes_do_login(self):
+        # o plano desliga o login numa instalacao nova; o diagnostico tem que
+        # listar os mesmos pacotes que o apt vai receber
+        _limpar_estado()
+        with mock.patch.object(perfil, "compativel", return_value=(True, "")), \
+                mock.patch.object(perfil, "pacotes_a_instalar", return_value=self.vazio) as pacotes, \
+                mock.patch.object(perfil, "indices", return_value={}), \
+                mock.patch.object(perfil, "compositores", return_value=[]), \
+                mock.patch.object(perfil, "compositor_xfwm4", return_value="true"):
+            perfil.diagnostico(self.p)
+        cfg = pacotes.call_args.args[0]
+        self.assertEqual(cfg["login"], "nao")
+        self.assertNotIn("imagemagick", perfil.pacotes_do_plano(cfg))
+
     def test_diagnostico_nao_grava_nada(self):
         _limpar_estado()
         self._rodar()
