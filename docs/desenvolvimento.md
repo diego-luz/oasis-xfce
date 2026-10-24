@@ -44,7 +44,9 @@ chama `receitas.executar`, como o Aplicar da página. O que ele acrescenta:
   perfil, resolvidos pelo motor. A lista de pacotes de cada componente é só para
   mostrar, e um teste garante que ela está contida no que as receitas pedem;
 - `plano` e `executar`: as opções que mudam e as receitas que elas afetam (mais
-  as desatualizadas). Sem nada a fazer, nada roda;
+  as desatualizadas: nunca aplicadas, ou cujo TOML ou algum arquivo de
+  `recursos/arquivos` que ela instala ficou mais novo que a marca). Sem nada a
+  fazer, nada roda;
 - `compositores`: os compositores da conta, lidos do `/proc`, e se o picom é o do
   projeto (a mesma linha de comando que o `d3bian-picom` procura).
 
@@ -94,7 +96,7 @@ O `xfce4-panel` só solta o painel da borda na posição livre (`p=0`), e nela o
 e o `y` são o **centro** do painel, presos dentro do monitor. Por isso:
 
 - a barra de cima tem a largura da tela menos dois vãos de 6 px, centrada;
-- as ilhas da esquerda e da direita têm largura fixa (172 e 176 px; a da
+- as ilhas da esquerda e da direita têm largura fixa (104 e 156 px; a da
   esquerda tem 64 sem o clima), e o centro sai do vão de 10 px até a borda;
 - a ilha do meio cresce com o dock (`length-adjust`) e fica sempre no centro.
 

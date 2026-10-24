@@ -8,6 +8,7 @@ quando o usuario muda uma opcao, sem nenhuma tabela em codigo.
 
 from __future__ import annotations
 
+import re
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -87,8 +88,20 @@ def afetadas_por(chaves: list[str]) -> list[str]:
     return sorted(alvos, key=lambda x: (len(x), x))
 
 
+def _fontes(r: Receita) -> list[Path]:
+    """O TOML da receita e os arquivos de recursos/arquivos que ela instala
+    (@@arquivos@@/..., $CTX_ARQUIVOS/... e os modelos)."""
+    if not r.arquivo:
+        return []
+    texto = r.arquivo.read_text()
+    nomes = set(re.findall(r"(?:@@arquivos@@|\$CTX_ARQUIVOS)/([^\"'\s]+)", texto))
+    nomes |= {str(p["modelo"]) for p in r.passos if p.get("modelo") and "@@" not in str(p["modelo"])}
+    return [r.arquivo, *(caminhos.ARQUIVOS / n for n in sorted(nomes))]
+
+
 def desatualizadas(lista: list[Receita] | None = None) -> set[str]:
-    """Receitas nunca aplicadas, ou cujo arquivo mudou depois de aplicadas.
+    """Receitas nunca aplicadas, ou cujo arquivo (ou algum que ela instala)
+    mudou depois de aplicadas.
 
     Sem isso, uma receita nova ou reescrita nunca chega ao sistema enquanto
     ninguem mexer numa opcao que a afete.
@@ -97,8 +110,11 @@ def desatualizadas(lista: list[Receita] | None = None) -> set[str]:
     for r in lista or carregar():
         marca = estado.marca(r.ident)
         try:
-            if not marca.is_file() or (
-                    r.arquivo and r.arquivo.stat().st_mtime > marca.stat().st_mtime):
+            if not marca.is_file():
+                saida.add(r.ident)
+                continue
+            quando = marca.stat().st_mtime
+            if any(f.is_file() and f.stat().st_mtime > quando for f in _fontes(r)):
                 saida.add(r.ident)
         except OSError:
             continue

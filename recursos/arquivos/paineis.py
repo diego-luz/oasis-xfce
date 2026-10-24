@@ -52,8 +52,11 @@ BARRA_VAO = 6              # vao entre a barra de cima e a borda
 ILHA_ALTURA = 48           # ilhas de baixo
 ILHA_VAO = 10              # vao entre as ilhas e a borda
 ILHA_ICONE = 32
-LARGURA_ESQUERDA = {"sim": 172, "nao": 64}   # com e sem o clima
-LARGURA_DIREITA = 176
+# com e sem o clima; o plugin do clima mostra so o icone (sem labels), e
+# grade + clima ocupam 73 px: sobram uns 15 de cada lado
+LARGURA_ESQUERDA = {"sim": 104, "nao": 64}
+# relogio em duas linhas + busca ocupam uns 122 px; folga para datas mais largas
+LARGURA_DIREITA = 156
 
 
 class Montador:

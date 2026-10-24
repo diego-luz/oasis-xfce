@@ -23,12 +23,21 @@ subir devolve dali.
 from __future__ import annotations
 
 import ctypes
+import fcntl
 import json
 import os
 import signal
 import subprocess
 import sys
 from pathlib import Path
+
+# pelo env o processo se chamaria python3; com o nome proprio, o
+# "pkill -x d3bian-foco" das receitas o encontra. Vai antes do import do gi,
+# que demora: a 30 sobe o foco e a 31 logo em seguida procura por ele
+try:
+    ctypes.CDLL(None).prctl(15, b"d3bian-foco", 0, 0, 0)  # PR_SET_NAME
+except (OSError, AttributeError):
+    pass
 
 import gi
 
@@ -308,16 +317,28 @@ class Foco:
         return False
 
 
+def unico() -> bool:
+    """Prende a trava da sessao; False se outro d3bian-foco ja a tem.
+
+    Dois focos brigariam pelas mesmas margens. A trava some com o processo,
+    entao um foco morto nao impede o proximo."""
+    pasta = Path(os.environ.get("XDG_RUNTIME_DIR") or ESTADO.parent)
+    pasta.mkdir(parents=True, exist_ok=True)
+    fd = os.open(pasta / "d3bian-foco.lock", os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        os.close(fd)
+        return False
+    return True  # o fd fica aberto enquanto o processo viver
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
         print(__doc__.strip())
         sys.exit(0)
-    # pelo env o processo se chamaria python3; com o nome proprio, o
-    # "pkill -x d3bian-foco" das receitas o encontra
-    try:
-        ctypes.CDLL(None).prctl(15, b"d3bian-foco", 0, 0, 0)  # PR_SET_NAME
-    except (OSError, AttributeError):
-        pass
+    if not unico():
+        sys.exit(0)
     loop = GLib.MainLoop()
     Gdk.init([])
     foco = Foco()

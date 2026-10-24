@@ -151,3 +151,62 @@ class SimulacaoNaoMexeNoApt(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+
+class FocoUnico(unittest.TestCase):
+    """Dois d3bian-foco brigariam pelas margens: o segundo tem que sair.
+
+    Roda so a funcao unico() do foco.py, em outro processo, sem subir o foco
+    (que mexeria nos paineis da sessao)."""
+
+    def test_segundo_foco_nao_pega_a_trava(self):
+        import ast
+        import os
+        import subprocess
+        import sys
+        import tempfile
+
+        fonte = (Path(__file__).parents[1] / "recursos/arquivos/foco.py").read_text()
+        funcao = next(n for n in ast.parse(fonte).body if isinstance(n, ast.FunctionDef) and n.name == "unico")
+        codigo = (
+            "import fcntl, os, sys, time\nfrom pathlib import Path\nESTADO = Path('/nao/usado')\n"
+            + ast.get_source_segment(fonte, funcao)
+            + "\nprint(unico(), flush=True)\nif len(sys.argv) > 1: time.sleep(30)\n"
+        )
+        with tempfile.TemporaryDirectory() as pasta:
+            env = {**os.environ, "XDG_RUNTIME_DIR": pasta}
+            primeiro = subprocess.Popen([sys.executable, "-c", codigo, "fica"], env=env, stdout=subprocess.PIPE, text=True)
+            try:
+                self.assertEqual(primeiro.stdout.readline().strip(), "True")
+                segundo = subprocess.run([sys.executable, "-c", codigo], env=env, capture_output=True, text=True)
+                self.assertEqual(segundo.stdout.strip(), "False")
+            finally:
+                primeiro.kill()
+                primeiro.wait()
+                primeiro.stdout.close()
+            # morto o primeiro, a trava fica livre
+            depois = subprocess.run([sys.executable, "-c", codigo], env=env, capture_output=True, text=True)
+            self.assertEqual(depois.stdout.strip(), "True")
+
+
+class ArquivoDaReceitaMudou(unittest.TestCase):
+    """Mudar o foco.py (e nao o TOML) tem que levar a 31 de novo ao sistema."""
+
+    def test_arquivo_instalado_mais_novo_que_a_marca(self):
+        import os
+        import tempfile
+
+        _limpar()
+        r = receitas.por_id()["31"]
+        self.assertIn(caminhos.ARQUIVOS / "foco.py", receitas._fontes(r))
+        toml = r.arquivo.stat().st_mtime
+        marca = estado.marca("31")
+        marca.parent.mkdir(parents=True, exist_ok=True)
+        marca.write_text("")
+        os.utime(marca, (toml + 10, toml + 10))
+        with tempfile.TemporaryDirectory() as pasta, mock.patch.object(caminhos, "ARQUIVOS", Path(pasta)):
+            foco = Path(pasta) / "foco.py"
+            foco.write_text("")
+            os.utime(foco, (toml + 5, toml + 5))
+            self.assertNotIn("31", receitas.desatualizadas([r]))
+            os.utime(foco, (toml + 20, toml + 20))
+            self.assertIn("31", receitas.desatualizadas([r]))
