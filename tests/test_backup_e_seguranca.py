@@ -93,6 +93,20 @@ PROIBIDO = [
 ]
 
 
+class RestaurarVoltaAsOpcoes(unittest.TestCase):
+    """Depois do perfil desativar e do restaurar, a pagina nao pode mostrar os
+    valores de desligar (paineis sempre a vista) como escolha da pessoa."""
+
+    def test_opcoes_voltam_ao_padrao(self):
+        _limpar()
+        config.gravar({"paineis_maximizada": "manter", "clima": "nao", "efeitos": "desligado"})
+        self.assertEqual(config.ler()["paineis_maximizada"], "manter")
+        desfazer._marcas_e_opcoes(lambda _texto: None)
+        self.assertFalse(caminhos.CONFIG.exists())
+        self.assertEqual(config.ler(), config.padroes())
+        self.assertEqual(config.ler()["paineis_maximizada"], "esconder")
+
+
 class FontesProibidas(unittest.TestCase):
     def _arquivos(self) -> list[Path]:
         fora = {"fonte-externa.sh"}

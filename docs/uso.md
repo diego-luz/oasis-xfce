@@ -228,8 +228,9 @@ roda; o picom deste projeto para, o compositor do xfwm4 volta e o resto vem do
 diário: os blocos marcados saem do `~/.gtkrc-2.0` e do `~/.xsessionrc` (e o
 arquivo some se só existia pelo projeto). O Flameshot instalado pela tela de
 Programas também volta: o Print Screen, o início com a sessão e o
-`flameshot.ini`. Com **Remover também o que foi instalado** saem os pacotes que
-o projeto instalou.
+`flameshot.ini`. As opções voltam ao padrão, inclusive as que o `perfil
+desativar` gravou para desligar os componentes. Com **Remover também o que foi
+instalado** saem os pacotes que o projeto instalou.
 
 Os painéis de antes são guardados com `xfce4-panel-profiles save`, e ele deixa
 de fora o botão (lançador) cujo programa já não existia naquela hora: um botão

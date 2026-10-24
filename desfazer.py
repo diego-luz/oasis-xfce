@@ -38,7 +38,7 @@ Diz = Callable[[str], None]
 ETAPAS = [
     ("d1", "O que cada receita pede para desfazer"),
     ("d2", "Arquivos, blocos e configuracoes"),
-    ("d3", "Etapas marcadas como aplicadas"),
+    ("d3", "Etapas marcadas como aplicadas e opcoes gravadas"),
 ]
 ETAPA_APAGAR = ("d4", "Remover o que foi instalado")
 
@@ -499,10 +499,22 @@ def executar(diz: Diz = print, apagar: bool = False) -> int:
         return 1
 
 
+def _marcas_e_opcoes(diz: Diz) -> int:
+    """Sem marcas a pagina mostra a instalacao completa. As opcoes voltam ao
+    padrao: as gravadas, inclusive as de desligar do perfil desativar, falavam
+    de uma instalacao que nao existe mais e voltariam marcadas na pagina."""
+    estado.limpar_marcas()
+    diz("  a pagina volta a mostrar a instalacao completa")
+    if caminhos.CONFIG.exists():
+        caminhos.CONFIG.unlink()
+        diz("  opcoes de volta ao padrao")
+    return 0
+
+
 def _executar(diz: Diz, apagar: bool) -> int:
     caminhos.preparar()
     passos = {"d1": _receitas, "d2": _diario,
-              "d3": lambda d: (estado.limpar_marcas(), d("  a pagina volta a mostrar a instalacao completa"))[0] or 0,
+              "d3": _marcas_e_opcoes,
               "d4": _remover}
     falhas = 0
     for ident, titulo in etapas(apagar):
